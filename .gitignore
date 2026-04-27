@@ -1,0 +1,14 @@
+**/vendor/
+**/node_modules/
+
+**/.env
+
+**/db_data_api/
+**/mysql_data/
+**/*.tmp
+**/#innodb_redo/
+
+
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,15 @@
+*.log
+db_data/
+*.sql
+vendor/
+.env
+.idea/
+*.iws
+*.iml
+*.ipr
+/shelf/
+/workspace.xml
+/httpRequests/
+/queries/
+/dataSources/
+/dataSources.local.xml

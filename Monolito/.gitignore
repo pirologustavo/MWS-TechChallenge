@@ -1,0 +1,7 @@
+db_data/
+vendor/
+.env
+.idea/
+**/db_data_api/
+**/*.tmp
+**/#innodb_redo/

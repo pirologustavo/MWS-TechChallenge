@@ -1,0 +1,79 @@
+services:
+  monolito:
+    build:
+      context: ./Monolito
+      dockerfile: Dockerfile
+    container_name: mws-monolito
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Monolito/mws:/var/www/html
+    networks:
+      - mws-network
+
+  db:
+    image: mysql:8.0
+    container_name: mws-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: mws_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: no
+    ports:
+      - "3307:3306"
+    networks:
+      - mws-network
+    volumes:
+      - ./Monolito/db_data:/var/lib/mysql
+
+  cliente-lv-api:
+    build:
+      context: ./Microservicos-lv/php84/Cliente-lv
+    container_name: cliente-lv-api
+    working_dir: /var/www/html
+    ports:
+      - "8001:80"
+    volumes:
+      - ./Microservicos-lv/php84/Cliente-lv:/var/www/html
+    networks:
+      mws-network:
+        aliases:
+          - cliente-lv
+    depends_on:
+      - db
+
+  veiculo-lv-api:
+    build:
+      context: ./Microservicos-lv/php84/Veiculo-lv
+    container_name: veiculo-lv-api
+    working_dir: /var/www/html
+    ports:
+      - "8002:80"
+    volumes:
+      - ./Microservicos-lv/php84/Veiculo-lv:/var/www/html
+    networks:
+      mws-network:
+        aliases:
+          - veiculo-lv
+    depends_on:
+      - db
+
+  estoque-lv-api:
+    build:
+      context: ./Microservicos-lv/php84/Estoque-lv
+    container_name: estoque-lv-api
+    working_dir: /var/www/html
+    ports:
+      - "8003:80"
+    volumes:
+      - ./Microservicos-lv/php84/Estoque-lv:/var/www/html
+    networks:
+      mws-network:
+        aliases:
+          - estoque-lv
+    depends_on:
+      - db
+
+networks:
+  mws-network:
+    driver: bridge
