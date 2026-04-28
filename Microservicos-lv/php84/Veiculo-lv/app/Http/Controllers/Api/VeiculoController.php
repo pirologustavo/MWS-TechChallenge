@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Validator;
 
 class VeiculoController extends Controller
 {
-    public function store(Request $request)
+    public function salvar(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'modelo'          => 'required|string|max:50',
@@ -63,5 +63,13 @@ class VeiculoController extends Controller
             'message' => 'Veiculo atualizado com sucesso!',
             'data'    => $veiculo
         ]);
+    }
+
+    public function buscarVeiculoCliente($id)
+    {
+        $veiculos = Veiculo::where('clientid', "{$id}")
+            ->get(['carid', 'modelo', 'placa']);
+
+        return response()->json($veiculos);
     }
 }

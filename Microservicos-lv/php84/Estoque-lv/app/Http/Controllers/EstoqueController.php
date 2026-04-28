@@ -4,9 +4,33 @@ namespace App\Http\Controllers;
 
 use App\Models\Estoque;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class EstoqueController extends Controller
 {
+    public function salvar(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'descricao'         => 'required|string|max:255',
+            'tipo'              => 'required|in:peca,servico',
+            'quantidade_atual'  => 'required_if:tipo,peca|numeric|min:0',
+            'quantidade_minima' => 'required_if:tipo,peca|integer|min:0',
+            'valor_custo'       => 'nullable|numeric|min:0',
+            'valor_venda'       => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $estoque = Estoque::create($request->all());
+
+        return response()->json([
+            'message' => 'Item cadastrado com sucesso!',
+            'data'    => $estoque
+        ], 201);
+    }
+
     public function listar()
     {
         $estoque = Estoque::select('estoqid', 'descricao', 'tipo', 'quantidade_atual', 'quantidade_minima', 'valor_venda')->get();
@@ -39,5 +63,16 @@ class EstoqueController extends Controller
             'message' => 'estoque atualizado com sucesso!',
             'data'    => $estoque
         ]);
+    }
+
+    public function buscar(Request $request)
+    {
+        $busca = $request->query('q');
+
+        $itens = Estoque::where('descricao', 'like', "%{$busca}%")
+            ->limit(10)
+            ->get(['estoqid', 'descricao', 'valor_venda']);
+
+        return response()->json($itens);
     }
 }

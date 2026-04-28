@@ -74,6 +74,38 @@ services:
     depends_on:
       - db
 
+  funcionario-lv-api:
+    build:
+      context: ./Microservicos-lv/php84/Funcionario-lv
+    container_name: funcionario-lv-api
+    working_dir: /var/www/html
+    ports:
+      - "8004:80"
+    volumes:
+      - ./Microservicos-lv/php84/Funcionario-lv:/var/www/html
+    networks:
+      mws-network:
+        aliases:
+            - funcionario-lv
+    depends_on:
+      - db
+
+  os-lv-api:
+    build:
+      context: ./Microservicos-lv/php84/Os-lv
+    container_name: Os-lv-api
+    working_dir: /var/www/html
+    ports:
+      - "8005:80"
+    volumes:
+      - ./Microservicos-lv/php84/Os-lv:/var/www/html
+    networks:
+      mws-network:
+        aliases:
+          - Os-lv
+    depends_on:
+      - db
+
 networks:
   mws-network:
     driver: bridge
