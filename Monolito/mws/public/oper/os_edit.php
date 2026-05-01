@@ -12,43 +12,33 @@ if (!AuthService::authenticate()) {
     exit;
 }
 
+$osService = new OsService();
+$osId = $_GET['osid'];
+
 $mensagemErro = "";
 $mensagemSucesso = "";
 
-$osService = new OsService();
+if (isset($_GET['sucesso'])) {
+    $mensagemSucesso = "Informações atualizadas com sucesso!";
+}
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $cliente = $_POST['cliente'];
-    $veiculo = $_POST['veiculo'];
-    $sintomas = $_POST['sintomas'];
-    $tecnico = $_POST['tecnico'];
-    $itens = $_POST['itens'] ?? [];
-    $total = $_POST['valor_total'] ?? 0;
-
-    $os = [
-        'clientid' => $cliente,
-        'carid' => $veiculo,
-        'sintomas' => $sintomas,
-        'funcid' => $tecnico,
-        'itens' => $itens,
-        'valor_total' => $total,
-    ];
-
-    function salvarOs(OsServiceInterface $osService, $os){
-        $osService->salvar($os);
+try {
+    $osParaEditar = $osService->buscarPorId($osId);
+    if (!$osParaEditar) {
+        throw new Exception("Ordem de Serviço não encontrada.");
     }
-
-    try {
-        salvarOs($osService, $os);
-
-        $mensagemSucesso = "Ordem de Serviço criada com sucesso!";
-    } catch (Exception $e) {
-        $mensagemErro = $e->getMessage();
-    }
+} catch (Exception $ex) {
+    $mensagemErro = $ex->getMessage();
 }
 
 require '../header.php';
 ?>
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
 
 <?php if ($mensagemErro): ?>
     <div style="background: #ffcccc; color: #990000; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
@@ -62,31 +52,29 @@ require '../header.php';
     </div>
 <?php endif; ?>
 
-<head>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-</head>
+<h2>Editar Ordem de Serviço</h2>
+<h3>OS: <?php echo $osParaEditar->osid ?></h3>
+<form method="POST" style="max-width: 600px; border: 1px solid #ccc; padding: 20px;">
+    <input type="hidden" name="osid" value="<?= $osParaEditar->osid ?>">
 
-<h2>Abertura de OS</h2>
-
-<form method="post">
-    <label for="cliente"><strong style="color:red">*</strong>Cliente</label>
-    <select id="cliente" name="cliente" required style="width: 100%">
-        <option value="">Digite o nome do cliente...</option>
-    </select>
+    <p>
+        <label for="cliente"><strong style="color:red">*</strong>Cliente</label>
+        <select id="cliente" name="cliente" required style="width: 100%">
+            <option value="<?= $osParaEditar->nome_cliente ?>"><?php echo $osParaEditar->nome_cliente ?></option>
+        </select>
+    </p>
 
     <label for="veiculo"><strong style="color:red;">*</strong>Veículo</label>
     <select id="veiculo" name="veiculo" required>
-        <option value="">Selecione o veículo</option>
+        <option value="<?= $osParaEditar->modelo ?>"><?php echo $osParaEditar->modelo ?></option>
     </select> <br>
 
     <label for="sintomas">Relato do cliente:</label>
-    <textarea name="sintomas" id="sintomas" rows="3" style="100%" placeholder="Descreva o que o cliente relatou..."></textarea> <br>
+    <textarea name="sintomas" id="sintomas" rows="3" style="100%" placeholder="<?=$osParaEditar->sintomas ?>"></textarea> <br>
 
     <label for="tecnico"><strong style="color:red;">*</strong>Mecânico Responsável:</label>
     <select name="tecnico" id="tecnico" style="width: 100%" required>
-        <option value="">Digite o nome do mecânico</option>
+        <option value="<?= $osParaEditar->nome_mecanico ?>"><?php echo $osParaEditar->nome_mecanico ?></option>
     </select>
 
     <div id="secao-itens" style="margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
@@ -125,7 +113,7 @@ require '../header.php';
     </div>
 
     <input type="hidden" name="valor_total" id="input-total-os" value="0">
-    <button type="submit">Criar OS</button>
+    <button type="submit">Editar OS</button>
 </form>
 
 <script>

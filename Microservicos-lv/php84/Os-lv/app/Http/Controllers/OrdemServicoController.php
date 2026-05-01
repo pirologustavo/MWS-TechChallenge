@@ -13,8 +13,8 @@ class OrdemServicoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'clientid'  => 'required|integer',
-            'veiculo'   => 'required|integer',
-            'tecnico'   => 'required|integer',
+            'carid'   => 'required|integer',
+            'funcid'   => 'required|integer',
             'sintomas'  => 'nullable|string',
             'itens'     => 'required|array|min:1'
         ]);
@@ -27,10 +27,12 @@ class OrdemServicoController extends Controller
 
             $os = OrdemServico::create([
                 'clientid'  => $request->clientid,
-                'veiculoid' => $request->veiculo,
-                'funcid'    => $request->tecnico,
+                'carid'     => $request->carid,
+                'funcid'    => $request->funcid,
                 'sintomas'  => $request->sintomas,
-                'status_atual' => 'Aberta'
+                'valor_total' => $request->valor_total,
+                'status_atual' => 'Aberta',
+                'statid_atual' => 1
             ]);
 
             foreach ($request->itens as $itemJson) {
@@ -53,4 +55,37 @@ class OrdemServicoController extends Controller
             ], 201);
         });
     }
+
+    public function listar()
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+                            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+                            ->join('funcionarios', 'funcionarios.funcid', '=', 'os.funcid')
+                            ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo', 'funcionarios.nome as nome_funcionario']);
+        return response()->json($os);
+    }
+
+    public function buscarPorId(string $id)
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+            ->join('funcionarios', 'funcionarios.funcid', '=', 'os.funcid')
+            ->where('os.osid', $id)
+            ->select([
+                'os.*',
+                'clientes.nome as nome_cliente',
+                'veiculos.modelo',
+                'veiculos.placa',
+                'funcionarios.nome as nome_mecanico'
+            ])
+            ->first();
+
+        if (!$os) {
+            return response()->json(['message' => 'Ordem de Serviço não encontrada'], 404);
+        }
+
+        return response()->json($os);
+    }
+
+
 }

@@ -14,7 +14,7 @@ class VeiculoRepository implements VeiculoRepositoryInterface
         ]);
 
         try {
-            $response = $veiculoApi->post('/api/veiculos', [
+            $response = $veiculoApi->post('/api/veiculos/salvar', [
                 'json' => $veiculo,
                 'headers' => [
                     'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),

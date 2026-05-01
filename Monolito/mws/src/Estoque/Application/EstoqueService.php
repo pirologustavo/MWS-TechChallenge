@@ -7,7 +7,7 @@ use Exception;
 
 class EstoqueService implements EstoqueServiceInterface
 {
-    public function validarDados($dados)
+    public function validarEstoque($dados)
     {
         if (empty($dados['descricao']) || strlen($dados['descricao']) < 3) {
             throw new Exception("A descrição do item deve ter pelo menos 3 caracteres");
@@ -36,7 +36,7 @@ class EstoqueService implements EstoqueServiceInterface
 
     public function atualizarEstoque($id, $dados)
     {
-        $dadosValidados = $this->validarDados($dados);
+        $dadosValidados = $this->validarEstoque($dados);
 
         return (new EstoqueRepository())->atualizar($id, $dadosValidados);
     }
@@ -58,5 +58,11 @@ class EstoqueService implements EstoqueServiceInterface
     public function buscarPorId($id)
     {
         return (new EstoqueRepository())->buscarPorId($id);
+    }
+
+    public function salvar ($estoque)
+    {
+        $dadosValidados = self::validarEstoque($estoque);
+        (new EstoqueRepository())->salvar($dadosValidados);
     }
 }

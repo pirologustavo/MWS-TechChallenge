@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('os', function (Blueprint $table) {
             $table->id('osid');
             $table->integer('clientid');
-            $table->integer('veiculoid');
+            $table->integer('carid');
             $table->integer('funcid');
-            $table->text('sintomas');
+            $table->text('sintomas')->nullable();
             $table->decimal('valor_total', 10, 2)->default(0);
             $table->string('status_atual')->default('Aberta');
             $table->foreignId('statid_atual')->default(1)->constrained('status', 'statid');

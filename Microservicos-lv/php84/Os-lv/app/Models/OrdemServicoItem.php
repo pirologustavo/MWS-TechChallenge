@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrdemServicoItem extends Model
 {
-    protected $table = 'os_items';
+    protected $table = 'os_itens';
     protected $primaryKey = 'itemid';
 
     protected $fillable = [

@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         salvarVeiculo($veiculoService, $veiculo);
 
         $mensagemSucesso = "Veículo cadastrado com sucesso!";
-    } catch (Exception $ex) {
-        $mensagemErro = $ex->getMessage();
+    } catch (Exception $e) {
+        $mensagemErro = $e->getMessage();
     }
 }
 

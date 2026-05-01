@@ -71,9 +71,9 @@ require '../header.php';
 ?>
 
 <?php if(!$idParaEditar): ?>
-
     <h2>Gerenciar Estoque</h2>
-    <table border="1" style="width:100%; text-align:left; border-collapse: collapse;">
+    <a href="cadastrar_estoque.php" style="padding: 5px 10px; background: orange; color: white; text-decoration: none; border-radius: 3px; text-align: center;">Novo item</a>
+    <table border="1" style="width:100%; text-align:left; border-collapse: collapse; margin-top: 10px;">
         <thead>
         <tr style="background-color: #f2f2f2;">
             <th>Item</th>
@@ -90,9 +90,9 @@ require '../header.php';
                 <td><?= htmlspecialchars($estoque->descricao) ?></td>
                 <td><?= ucfirst($estoque->tipo) ?></td>
                 <td style="color: <?= $estoque->alerta ? 'red' : 'black' ?>; font-weight: <?= $estoque->alerta ? 'bold' : 'normal' ?>;">
-                    <?= $estoque->quantidade_atual ?>
+                    <?= ($estoque->tipo === 'peca') ? $estoque->quantidade_atual : '-' ?>
                 </td>
-                <td><?=$estoque->quantidade_minima ?></td>
+                <td><?= ($estoque->tipo === 'peca') ? $estoque->quantidade_minima : '-' ?></td>
                 <td>R$ <?= number_format($estoque->valor_venda, 2, ',', '.') ?></td>
                 <td style="padding: 10px">
                     <a href="estoque.php?estoqid=<?= $estoque->estoqid ?>"
@@ -127,21 +127,43 @@ require '../header.php';
         </p>
 
         <p>
-            <label>Tipo:</label><br>
-            <input type="text" name="tipo" value="<?= $estoqueParaEditar->tipo ?>" style="width: 100%">
+            <label for="tipo">Tipo:</label><br>
+            <select name="tipo" id="tipo" required onchange="toggleCamposEstoque()" style="width: 100%">
+                <option value="">Selecione...</option>
+
+                <option value="peca" <?= ($estoqueParaEditar->tipo === 'peca') ? 'selected' : ''; ?>>
+                    Peça (Produto Físico)
+                </option>
+
+                <option value="servico" <?= ($estoqueParaEditar->tipo === 'servico') ? 'selected' : ''; ?>>
+                    Serviço (Mão de Obra)
+                </option>
+            </select>
         </p>
 
-        <p>
+        <p class="campo-estoque">
             <label>Quantidade:</label><br>
-            <input type="text" name="qtd_atual" value="<?= $estoqueParaEditar->quantidade_atual ?>" style="width: 100%">
+            <input type="number" name="qtd_atual" value="<?= $estoqueParaEditar->quantidade_atual ?>" style="width: 100%" min="0">
         </p>
 
         <p>
             <label>Preço:</label><br>
-            <input type="text" name="preco" value="<?= $estoqueParaEditar->valor_venda ?>" style="width: 100%" id="cep">
+            <input type="number" name="preco" value="<?= $estoqueParaEditar->valor_venda ?>" style="width: 100%" id="preco" step="0.01" min="0">
         </p>
 
         <button type="submit" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
         <a href="estoque.php">Voltar para o estoque</a>
     </form>
 <?php endif; ?>
+
+<script>
+    function toggleCamposEstoque() {
+        const tipo = document.getElementById('tipo').value;
+        const campos = document.getElementsByClassName('campo-estoque');
+        const displayStatus = (tipo === 'servico') ? 'none' : 'block';
+        for (let i = 0; i < campos.length; i++) {
+            campos[i].style.display = displayStatus;
+        }
+    }
+    window.onload = toggleCamposEstoque;
+</script>

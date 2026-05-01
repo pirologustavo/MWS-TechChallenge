@@ -39,7 +39,7 @@ try {
         $relatorio = listarTodos($clienteService);
     }
 } catch (Exception $e) {
-    $mensagem = $e->getMessage();
+    $mensagemErro = $e->getMessage();
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -90,7 +90,7 @@ require '../header.php';
         <th>ID</th>
         <th>Nome</th>
         <th>CPF</th>
-        <th>Ações</th>
+        <th>Ação</th>
     </tr>
     </thead>
     <tbody>
