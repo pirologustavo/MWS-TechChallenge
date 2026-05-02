@@ -35,6 +35,7 @@ if (!AuthService::authenticate()) {
         justify-content: center;
         text-align: center;
         min-height: 80px;
+        margin: 10px;
     }
 
     .menu-item:hover {
@@ -49,11 +50,18 @@ if (!AuthService::authenticate()) {
 </style>
 
 <div class="menu-grid">
-    <a href="abertura_os.php" class="menu-item">Abertura de OS</a>
-    <a href="historico_os.php" class="menu-item">Histórico de OS</a>
-    <a href="cadastro_cliente.php" class="menu-item">Cadastrar Cliente</a>
-    <a href="editar_cliente.php" class="menu-item">Editar Cliente</a>
-    <a href="cadastro_veiculo.php" class="menu-item">Cadastrar Veículo</a>
-    <a href="editar_veiculo.php" class="menu-item">Editar Veiculo</a>
-    <a href="estoque.php" class="menu-item">Gerenciar Estoque</a>
+    <div class="os">
+        <a href="abertura_os.php" class="menu-item">Abertura de OS</a>
+        <a href="historico_os.php" class="menu-item">Histórico de OS</a>
+        <a href="analise_os.php" class="menu-item">OS Recebidas</a>
+    </div>
+    <div class="cadastro">
+        <a href="cadastro_cliente.php" class="menu-item">Cadastrar Cliente</a>
+        <a href="editar_cliente.php" class="menu-item">Editar Cliente</a>
+        <a href="cadastro_veiculo.php" class="menu-item">Cadastrar Veículo</a>
+        <a href="editar_veiculo.php" class="menu-item">Editar Veiculo</a>
+    </div>
+    <div class="estoque">
+        <a href="estoque.php" class="menu-item">Gerenciar Estoque</a>
+    </div>
 </div>

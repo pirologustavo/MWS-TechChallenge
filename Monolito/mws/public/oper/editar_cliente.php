@@ -63,13 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'telefone' => $telefone
     ];
 
-    function processarCadastro(ClienteServiceInterface $clienteService, $id, array $cliente)
+    function atualizarCliente(ClienteServiceInterface $clienteService, $id, array $cliente)
     {
         $clienteService->atualizarCliente($id, $cliente);
     }
 
     try {
-        processarCadastro($clienteService, $idParaEditar, $cliente);
+        atualizarCliente($clienteService, $idParaEditar, $cliente);
 
         header("Location: editar_cliente.php?clientid=" . $idParaEditar . "&sucesso=1");
         exit;

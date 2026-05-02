@@ -31,6 +31,37 @@ try {
     $mensagemErro = $ex->getMessage();
 }
 
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $cliente = $_POST['cliente'] ?? null;
+    $veiculo = $_POST['veiculo'] ?? null;
+    $sintomas = $_POST['sintomas'] ?? null;
+    $mecanico = $_POST['tecnico'] ?? null;
+    $itens = $_POST['itens'] ?? null;
+    $total = $_POST['valor_total'] ?? 0;
+
+    $os = [
+        'clientid' => $cliente,
+        'carid' => $veiculo,
+        'sintomas' => $sintomas,
+        'funcid' => $mecanico,
+        'itens' => $itens,
+        'valor_total' => $total,
+    ];
+
+    function atualizarOs(OsServiceInterface $osService, $id, $os) {
+        $osService->atualizarOs($id, $os);
+    }
+
+    try {
+        atualizarOs($osService, $osId, $os);
+
+        header("Location: os_edit.php?osid=" . $osId . "&sucesso=1");
+        exit;
+    } catch (Exception $e) {
+        $mensagemErro = $e->getMessage();
+    }
+}
+
 require '../header.php';
 ?>
 
@@ -53,28 +84,28 @@ require '../header.php';
 <?php endif; ?>
 
 <h2>Editar Ordem de Serviço</h2>
-<h3>OS: <?php echo $osParaEditar->osid ?></h3>
+<h3>OS: <?php echo $osParaEditar->os->osid ?></h3>
 <form method="POST" style="max-width: 600px; border: 1px solid #ccc; padding: 20px;">
-    <input type="hidden" name="osid" value="<?= $osParaEditar->osid ?>">
+    <input type="hidden" name="osid" value="<?= $osParaEditar->os->osid ?>">
 
     <p>
         <label for="cliente"><strong style="color:red">*</strong>Cliente</label>
         <select id="cliente" name="cliente" required style="width: 100%">
-            <option value="<?= $osParaEditar->nome_cliente ?>"><?php echo $osParaEditar->nome_cliente ?></option>
+            <option value="<?= $osParaEditar->os->clientid ?>"><?php echo $osParaEditar->os->nome_cliente ?></option>
         </select>
     </p>
 
     <label for="veiculo"><strong style="color:red;">*</strong>Veículo</label>
     <select id="veiculo" name="veiculo" required>
-        <option value="<?= $osParaEditar->modelo ?>"><?php echo $osParaEditar->modelo ?></option>
+        <option value="<?= $osParaEditar->os->carid ?>"><?php echo $osParaEditar->os->modelo ?></option>
     </select> <br>
 
     <label for="sintomas">Relato do cliente:</label>
-    <textarea name="sintomas" id="sintomas" rows="3" style="100%" placeholder="<?=$osParaEditar->sintomas ?>"></textarea> <br>
+    <textarea name="sintomas" id="sintomas" rows="3" style="100%" placeholder="<?=$osParaEditar->os->sintomas ?>"> <?php echo $osParaEditar->os->sintomas ?></textarea> <br>
 
     <label for="tecnico"><strong style="color:red;">*</strong>Mecânico Responsável:</label>
     <select name="tecnico" id="tecnico" style="width: 100%" required>
-        <option value="<?= $osParaEditar->nome_mecanico ?>"><?php echo $osParaEditar->nome_mecanico ?></option>
+        <option value="<?= $osParaEditar->os->funcid ?>"><?php echo $osParaEditar->os->nome_mecanico ?></option>
     </select>
 
     <div id="secao-itens" style="margin-top: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
@@ -101,6 +132,21 @@ require '../header.php';
             </tr>
             </thead>
             <tbody>
+            <?php if (!empty($osParaEditar->itens)): ?>
+                <?php foreach ($osParaEditar->itens as $item): ?>
+                    <?php $subtotal = $item->qtd * $item->preco; ?>
+                    <tr>
+                        <td><?= $item->descricao ?></td>
+                        <td><?= $item->qtd ?></td>
+                        <td>R$ <?= number_format($item->preco, 2, ',', '.') ?></td>
+                        <td>R$ <?= number_format($subtotal, 2, ',', '.') ?></td>
+                        <td>
+                            <button type="button" class="btn-remove" data-subtotal="<?= $subtotal ?>" style="color: red; border: none; background: none; cursor:pointer;">Remover</button>
+                            <input type="hidden" name="itens[]" value='{"id": "<?= $item->id ?>", "qtd": "<?= $item->qtd ?>", "preco": "<?= $item->preco ?>"}'>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
             </tbody>
             <tfoot>
             <tr>
@@ -118,121 +164,79 @@ require '../header.php';
 
 <script>
     $(document).ready(function() {
+        let totalGeral = 0;
+
+        $('.btn-remove').each(function() {
+            totalGeral += parseFloat($(this).data('subtotal'));
+        });
+
+        $('#total-os').text("R$ " + totalGeral.toFixed(2));
+        $('#input-total-os').val(totalGeral.toFixed(2));
+
         $('#cliente').select2({
             minimumInputLength: 3,
             ajax: {
                 url: 'http://localhost:8001/api/clientes/buscar',
                 dataType: 'json',
                 delay: 250,
-                data: function (params) {
-                    return {
-                        q: params.term
-                    };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.map(function(item) {
-                            return {
-                                id: item.clientid,
-                                text: item.nome
-                            };
-                        })
-                    };
-                },
+                processResults: (data) => ({
+                    results: data.map(item => ({ id: item.clientid, text: item.nome }))
+                }),
                 cache: true
             },
-            placeholder: 'Selecione um cliente',
-            language: {
-                inputTooShort: function() { return "Digite 3 ou mais letras..."; }
-            }
+            placeholder: 'Selecione um cliente'
         });
-    });
 
-    $(document).on('select2:open', () => {
-        document.querySelector('.select2-search__field').focus();
-    });
-
-    $('#cliente').on('select2:select', function (e) {
-        const clienteId = e.params.data.id;
-        const veiculoSelect = $('#veiculo');
-
-        veiculoSelect.html('<option value="">Carregando veículos...</option>');
-
-        fetch(`http://localhost:8002/api/veiculos/buscarVeiculoCliente/${clienteId}`)
-            .then(response => response.json())
-            .then(data => {
-                let options = '<option value="">Selecione o veículo</option>';
-
-                data.forEach(veiculo => {
-                    options += `<option value="${veiculo.carid}">${veiculo.modelo} - ${veiculo.placa}</option>`;
-                });
-
-                veiculoSelect.html(options);
-            })
-            .catch(error => {
-                console.error('Erro ao buscar veículos:', error);
-                veiculoSelect.html('<option value="">Erro ao carregar veículos</option>');
-            });
-    });
-
-    $(document).ready(function() {
         $('#tecnico').select2({
             minimumInputLength: 3,
             ajax: {
                 url: 'http://localhost:8004/api/funcionario/buscarMecanico',
                 dataType: 'json',
                 delay: 250,
-                data: function (params) {
-                    return {
-                        q: params.term
-                    };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.map(function(item) {
-                            return {
-                                id: item.funcid,
-                                text: item.nome
-                            };
-                        })
-                    };
-                },
+                processResults: (data) => ({
+                    results: data.map(item => ({ id: item.funcid, text: item.nome }))
+                }),
                 cache: true
             },
-            placeholder: 'Selecione um mecânico',
-            language: {
-                inputTooShort: function() { return "Digite 3 ou mais letras..."; }
-            }
+            placeholder: 'Selecione um mecânico'
         });
-    });
 
-    $(document).ready(function() {
         $('#busca_estoque').select2({
             minimumInputLength: 2,
             ajax: {
                 url: 'http://localhost:8003/api/estoque/buscar',
                 dataType: 'json',
                 delay: 250,
-                processResults: function (data) {
-                    return {
-                        results: data.map(function(item) {
-                            return {
-                                id: item.estoqid,
-                                text: item.descricao + " (R$ " + item.valor_venda + ")",
-                                preco: item.valor_venda,
-                                descricao: item.descricao
-                            };
-                        })
-                    };
-                }
+                processResults: (data) => ({
+                    results: data.map(item => ({
+                        id: item.estoqid,
+                        text: `${item.descricao} (R$ ${item.valor_venda})`,
+                        preco: item.valor_venda,
+                        descricao: item.descricao
+                    }))
+                })
             }
         });
 
-        let totalGeral = 0;
+        $('#cliente').on('select2:select', function (e) {
+            const clienteId = e.params.data.id;
+            const veiculoSelect = $('#veiculo');
+            veiculoSelect.html('<option value="">Carregando veículos...</option>');
+
+            fetch(`http://localhost:8002/api/veiculos/buscarVeiculoCliente/${clienteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let options = '<option value="">Selecione o veículo</option>';
+                    data.forEach(v => {
+                        options += `<option value="${v.carid}">${v.modelo} - ${v.placa}</option>`;
+                    });
+                    veiculoSelect.html(options);
+                });
+        });
 
         $('#btn-adicionar-item').click(function() {
             const itemData = $('#busca_estoque').select2('data')[0];
-            const qtd = $('#item_qtd').val();
+            const qtd = parseFloat($('#item_qtd').val());
 
             if (!itemData || !itemData.id) {
                 alert("Selecione um item primeiro!");
@@ -242,38 +246,39 @@ require '../header.php';
             const subtotal = itemData.preco * qtd;
             totalGeral += subtotal;
 
-            $('#total-os').text("R$ " + totalGeral.toFixed(2));
-            $('#input-total-os').val(totalGeral.toFixed(2));
-
             const novaLinha = `
-            <tr>
-                <td>${itemData.descricao}</td>
-                <td>${qtd}</td>
-                <td>R$ ${parseFloat(itemData.preco).toFixed(2)}</td>
-                <td>R$ ${subtotal.toFixed(2)}</td>
-                <td>
-                    <button type="button" class="btn-remove" data-subtotal="${subtotal}" style="color: red; border: none; background: none; cursor:pointer;">Remover</button>
-                    <input type="hidden" name="itens[]" value='{"id": "${itemData.id}", "qtd": "${qtd}", "preco": "${itemData.preco}"}'>
-                </td>
-            </tr>
-        `;
+                <tr>
+                    <td>${itemData.descricao}</td>
+                    <td>${qtd}</td>
+                    <td>R$ ${parseFloat(itemData.preco).toFixed(2)}</td>
+                    <td>R$ ${subtotal.toFixed(2)}</td>
+                    <td>
+                        <button type="button" class="btn-remove" data-subtotal="${subtotal}" style="color: red; border: none; background: none; cursor:pointer;">Remover</button>
+                        <input type="hidden" name="itens[]" value='{"id": "${itemData.id}", "qtd": "${qtd}", "preco": "${itemData.preco}"}'>
+                    </td>
+                </tr>
+            `;
 
             $('#tabela-itens-os tbody').append(novaLinha);
+
             $('#total-os').text("R$ " + totalGeral.toFixed(2));
+            $('#input-total-os').val(totalGeral.toFixed(2));
 
             $('#busca_estoque').val(null).trigger('change');
             $('#item_qtd').val(1);
         });
 
         $(document).on('click', '.btn-remove', function() {
-            const sub = $(this).data('subtotal');
+            const sub = parseFloat($(this).data('subtotal'));
             totalGeral -= sub;
 
             $('#total-os').text("R$ " + totalGeral.toFixed(2));
             $('#input-total-os').val(totalGeral.toFixed(2));
-
-            $('#total-os').text("R$ " + totalGeral.toFixed(2));
             $(this).closest('tr').remove();
+        });
+
+        $(document).on('select2:open', () => {
+            document.querySelector('.select2-search__field').focus();
         });
     });
 </script>

@@ -81,4 +81,26 @@ class EstoqueRepository implements EstoqueRepositoryInterface
             throw new Exception("Erro na API: " . $e->getMessage());
         }
     }
+
+    public function corrigirEstoque($itens)
+    {
+        $estoqueApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout'  => 2.0,
+        ]);
+
+        try {
+            $response = $estoqueApi->post('/api/estoque/alterarEstoque', [
+                'json' => $itens,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
+                    'Accept'        => 'application/json',
+                ]
+            ]);
+
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
 }
