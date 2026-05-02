@@ -7,3 +7,4 @@ use App\Http\Controllers\OrdemServicoController;
 Route::post('/os/salvar', [OrdemServicoController::class, 'store']);
 Route::get('/os/listar', [OrdemServicoController::class, 'listar']);
 Route::get('/os/buscarPorId/{id}', [OrdemServicoController::class, 'buscarPorId']);
+Route::match(['PUT', 'POST'], '/os/atualizarOs/{id}', [OrdemServicoController::class, 'atualizarOs']);

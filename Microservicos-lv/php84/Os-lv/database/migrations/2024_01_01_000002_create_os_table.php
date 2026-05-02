@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('funcid');
             $table->text('sintomas')->nullable();
             $table->decimal('valor_total', 10, 2)->default(0);
-            $table->string('status_atual')->default('Aberta');
+            $table->string('status_atual')->default('Recebida');
             $table->foreignId('statid_atual')->default(1)->constrained('status', 'statid');
             $table->timestamps();
         });

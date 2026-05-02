@@ -93,7 +93,7 @@ services:
   os-lv-api:
     build:
       context: ./Microservicos-lv/php84/Os-lv
-    container_name: Os-lv-api
+    container_name: os-lv-api
     working_dir: /var/www/html
     ports:
       - "8005:80"
@@ -102,7 +102,7 @@ services:
     networks:
       mws-network:
         aliases:
-          - Os-lv
+          - os-lv
     depends_on:
       - db
 

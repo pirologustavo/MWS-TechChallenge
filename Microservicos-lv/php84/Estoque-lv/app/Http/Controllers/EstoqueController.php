@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Estoque;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class EstoqueController extends Controller
 {
@@ -74,5 +75,29 @@ class EstoqueController extends Controller
             ->get(['estoqid', 'descricao', 'valor_venda']);
 
         return response()->json($itens);
+    }
+
+    public function alterarEstoque(Request $request)
+    {
+        $itens = $request->all();
+
+        return DB::transaction(function () use ($itens) {
+            $processados = [];
+
+            foreach ($itens as $item) {
+                $produto = Estoque::where('estoqid', $item['id'])->first();
+
+                if ($produto) {
+                    $produto->decrement('quantidade_atual', $item['qtd']);
+
+                    $processados[] = $produto;
+                }
+            }
+
+            return response()->json([
+                'message' => 'Estoque atualizado com sucesso',
+                'itens' => $processados
+            ]);
+        });
     }
 }

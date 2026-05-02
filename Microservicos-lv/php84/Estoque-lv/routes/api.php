@@ -8,3 +8,4 @@ Route::get('/estoque/listar', [EstoqueController::class, 'listar']);
 Route::get('/estoque/buscarPorId/{id}', [EstoqueController::class, 'buscarPorId']);
 Route::put('/estoque/atualizarEstoque/{id}', [EstoqueController::class, 'atualizarEstoque']);
 Route::get('/estoque/buscar', [EstoqueController::class, 'buscar']);
+Route::post('/estoque/alterarEstoque', [EstoqueController::class, 'alterarEstoque']);

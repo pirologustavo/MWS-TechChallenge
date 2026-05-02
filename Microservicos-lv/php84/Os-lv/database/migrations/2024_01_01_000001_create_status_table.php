@@ -12,9 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('status', function (Blueprint $table) {
-            $table->id('statid'); // Definindo a PK como statid
+            $table->id('statid');
             $table->string('statusdesc', 50)->unique();
         });
+
+        // Inserindo os status iniciais logo após criar a tabela
+        DB::table('status')->insert([
+            ['statusdesc' => 'Recebida'],
+            ['statusdesc' => 'Em diagnóstico'],
+            ['statusdesc' => 'Aguardando Aprovação'],
+            ['statusdesc' => 'Em Execução'],
+            ['statusdesc' => 'Finalizado'],
+            ['statusdesc' => 'Entregue'],
+        ]);
     }
 
     /**
