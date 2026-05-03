@@ -100,4 +100,19 @@ class EstoqueController extends Controller
             ]);
         });
     }
+
+    public function estornarItens(Request $request)
+    {
+        $itens = $request->all();
+
+        return DB::transaction(function () use ($itens) {
+            foreach ($itens as $item) {
+                $produto = Estoque::where('estoqid', $item['id'])->first();
+                if ($produto) {
+                    $produto->decrement('quantidade_atual', $item['qtd']);
+                }
+            }
+            return response()->json(['message' => 'Estoque baixado com sucesso']);
+        });
+    }
 }

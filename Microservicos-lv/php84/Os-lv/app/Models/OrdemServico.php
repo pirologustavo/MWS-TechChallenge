@@ -10,7 +10,7 @@ class OrdemServico extends Model
     protected $primaryKey = 'osid';
 
     protected $fillable = [
-        'clientid', 'carid', 'funcid', 'sintomas', 'valor_total', 'status_atual', 'statid_atual'
+        'clientid', 'carid', 'funcid', 'sintomas', 'valor_total', 'status_atual', 'statid_atual', 'entregue'
     ];
 
     public function itens()

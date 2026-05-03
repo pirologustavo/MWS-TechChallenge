@@ -82,7 +82,7 @@ class EstoqueRepository implements EstoqueRepositoryInterface
         }
     }
 
-    public function corrigirEstoque($itens)
+    public function alterarEstoque($itens)
     {
         $estoqueApi = new \GuzzleHttp\Client([
             'base_uri' => self::URI,
@@ -101,6 +101,28 @@ class EstoqueRepository implements EstoqueRepositoryInterface
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
+
+    public function estornarItens(array $itensFormatados)
+    {
+        $estoqueApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout'  => 5.0,
+        ]);
+
+        try {
+            $response = $estoqueApi->post('/api/estoque/estornarItens', [
+                'json' => $itensFormatados,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
+                    'Accept'        => 'application/json',
+                ]
+            ]);
+
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro ao estornar itens na API de Estoque: " . $e->getMessage());
         }
     }
 }

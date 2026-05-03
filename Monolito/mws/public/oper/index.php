@@ -42,6 +42,11 @@ if (!AuthService::authenticate()) {
         background-color: #34495e;
     }
 
+    .cabecalho {
+        text-align: center;
+        font-weight: bold;
+    }
+
     @media (max-width: 600px) {
         .menu-grid {
             grid-template-columns: 1fr;
@@ -51,17 +56,22 @@ if (!AuthService::authenticate()) {
 
 <div class="menu-grid">
     <div class="os">
+        <p class="cabecalho">Ordem de Serviço</p>
         <a href="abertura_os.php" class="menu-item">Abertura de OS</a>
         <a href="historico_os.php" class="menu-item">Histórico de OS</a>
         <a href="analise_os.php" class="menu-item">OS Recebidas</a>
+        <a href="aprova_os.php" class="menu-item">Aprovar OS</a>
+        <a href="finalizar_os.php" class="menu-item">Finalizar OS</a>
     </div>
     <div class="cadastro">
+        <p class="cabecalho">Cadastro</p>
         <a href="cadastro_cliente.php" class="menu-item">Cadastrar Cliente</a>
         <a href="editar_cliente.php" class="menu-item">Editar Cliente</a>
         <a href="cadastro_veiculo.php" class="menu-item">Cadastrar Veículo</a>
         <a href="editar_veiculo.php" class="menu-item">Editar Veiculo</a>
     </div>
     <div class="estoque">
+        <p class="cabecalho">Estoque</p>
         <a href="estoque.php" class="menu-item">Gerenciar Estoque</a>
     </div>
 </div>

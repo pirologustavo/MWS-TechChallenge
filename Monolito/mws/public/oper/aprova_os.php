@@ -16,15 +16,31 @@ $mensagemErro = "";
 
 $osService = new OsService();
 
-function listarTodos(OsServiceInterface $osService)
+function listarAguardandoAprovacao(OsServiceInterface $osService)
 {
-    return $osService->listarTodos();
+    return $osService->listarAguardandoAprovacao();
 }
 
 try {
-    $relatorio = listarTodos($osService);
+    $relatorio = listarAguardandoAprovacao($osService);
 } catch (Exception $ex) {
     $mensagemErro = $ex->getMessage();
+}
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['osid'])) {
+    $idParaAprovar = $_POST['osid'];
+    function aprovarOs(OsServiceInterface $osService, $id){
+        $osService->aprovarOs($id);
+    }
+
+    try {
+        aprovarOs($osService, $idParaAprovar);
+
+        $relatorio = listarAguardandoAprovacao($osService);
+        $mensagemSucesso = "Ordem de Serviço $idParaAprovar aprovada com sucesso!";
+    } catch (Exception $e) {
+        $mensagemErro = $e->getMessage();
+    }
 }
 
 require '../header.php';
@@ -36,7 +52,8 @@ require '../header.php';
     </div>
 <?php endif; ?>
 
-<h2>Ordens de Serviço</h2>
+<h2>Aprovar Ordem de Serviço</h2>
+
 <table border="1" style="width:100%; text-align:left; border-collapse: collapse;">
     <thead>
     <tr style="background-color: #f2f2f2;">
@@ -55,12 +72,16 @@ require '../header.php';
             <td><?= $os->modelo ?></td>
             <td><?= $os->nome_funcionario ?></td>
             <td style="padding: 10px">
-                <a href="os_edit.php?osid=<?= $os->osid ?>"
-                   style="padding: 5px 10px; background: orange; color: white; text-decoration: none; border-radius: 3px;">
-                    Editar
-                </a>
+                <form method="POST" style="margin: 0;">
+                    <input type="hidden" name="osid" value="<?= $os->osid ?>">
+                    <button type="submit" name="btn_aprovar"
+                            style="padding: 5px 10px; background: orange; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                        Aprovar
+                    </button>
+                </form>
             </td>
         </tr>
     <?php endforeach; ?>
     </tbody>
 </table>
+

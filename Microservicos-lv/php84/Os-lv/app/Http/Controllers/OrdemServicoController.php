@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Interface\OrdemServicoInterface;
 use App\Models\OrdemServico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Interface\OsStatusInterface;
 
 class OrdemServicoController extends Controller
 {
@@ -104,8 +106,6 @@ class OrdemServicoController extends Controller
         ]);
     }
 
-    // No seu OrdemServicoController.php
-
     public function atualizarOs(Request $request, $id)
     {
         $os = OrdemServico::where('osid', $id)->first();
@@ -114,7 +114,6 @@ class OrdemServicoController extends Controller
             return response()->json(['message' => "Ordem de Serviço $id não encontrada"], 404);
         }
 
-        // 1. Atualiza o cabeçalho
         $os->update([
             'clientid'     => $request->input('clientid'),
             'carid'        => $request->input('carid'),
@@ -132,14 +131,12 @@ class OrdemServicoController extends Controller
                 $estoqid = $item['id'];
                 $idsEnviados[] = $estoqid;
 
-                // 2. Tenta encontrar o item já existente para esta OS
                 $itemExistente = DB::table('os_itens')
                     ->where('osid', $id)
                     ->where('estoqid', $estoqid)
                     ->first();
 
                 if ($itemExistente) {
-                    // 3. SE EXISTE: Apenas faz o UPDATE (Preserva o created_at)
                     DB::table('os_itens')
                         ->where('osid', $id)
                         ->where('estoqid', $estoqid)
@@ -149,7 +146,6 @@ class OrdemServicoController extends Controller
                             'updated_at'     => now()
                         ]);
                 } else {
-                    // 4. SE NÃO EXISTE: Faz o INSERT (Define o created_at)
                     DB::table('os_itens')->insert([
                         'osid'           => $id,
                         'estoqid'        => $estoqid,
@@ -161,7 +157,6 @@ class OrdemServicoController extends Controller
                 }
             }
 
-            // 5. REMOVE os itens que não foram enviados no formulário (foram excluídos na tela)
             DB::table('os_itens')
                 ->where('osid', $id)
                 ->whereNotIn('estoqid', $idsEnviados)
@@ -169,5 +164,139 @@ class OrdemServicoController extends Controller
         }
 
         return response()->json(['message' => 'Atualizado com sucesso!']);
+    }
+
+    public function listarRecebidos()
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+            ->join('funcionarios', 'funcionarios.funcid', '=', 'os.funcid')
+            ->whereIn('os.statid_atual', [OsStatusInterface::RECEBIDA[1], OsStatusInterface::EM_DIAGNOSTICO[1]])
+            ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo', 'funcionarios.nome as nome_funcionario']);
+        return response()->json($os);
+    }
+
+    public function emDiagnostico(string $id)
+    {
+        $os = OrdemServico::where('osid', $id)
+            ->update([
+                'status_atual' => OsStatusInterface::EM_DIAGNOSTICO[0],
+                'statid_atual' => OsStatusInterface::EM_DIAGNOSTICO[1]
+            ]);
+
+        return response()->json([
+            'sucesso' => $os > 0,
+            'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
+        ]);
+    }
+
+    public function analiseOs(Request $request, $id)
+    {
+       # return DB::transaction(function () use ($request, $id) {
+            $os = OrdemServico::where('osid', $id)->lockForUpdate()->first();
+
+            if (!$os) {
+                return response()->json(['message' => "OS $id não encontrada"], 404);
+            }
+
+            $os->update([
+                'analise'      => $request->input('analise'),
+                'status_atual' => OsStatusInterface::FINALIZADO[0],
+                'statid_atual' => OsStatusInterface::FINALIZADO[1],
+                'valor_total'  => $request->input('valor_total')
+            ]);
+
+            if ($request->has('itens')) {
+                $itensEnviados = $request->itens;
+                $idsEnviados = [];
+
+                foreach ($itensEnviados as $itemJson) {
+                    $item = is_array($itemJson) ? $itemJson : json_decode($itemJson, true);
+                    $estoqid = $item['id'];
+                    $idsEnviados[] = $estoqid;
+
+                    DB::table('os_itens')->updateOrInsert(
+                        ['osid' => $id, 'estoqid' => $estoqid],
+                        [
+                            'quantidade'     => $item['qtd'],
+                            'preco_unitario' => $item['preco'],
+                            'updated_at'     => now(),
+                            'created_at'     => DB::raw('IFNULL(created_at, NOW())')
+                        ]
+                    );
+                }
+
+                DB::table('os_itens')
+                    ->where('osid', $id)
+                    ->whereNotIn('estoqid', $idsEnviados)
+                    ->delete();
+            }
+
+            return response()->json(['message' => 'Análise finalizada e enviada para aprovação!']);
+       # });
+    }
+
+    public function listarAguardandoAprovacao()
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+            ->join('funcionarios', 'funcionarios.funcid', '=', 'os.funcid')
+            ->whereIn('os.statid_atual', [OsStatusInterface::AGUARDANDO_APROVACAO[1]])
+            ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo', 'funcionarios.nome as nome_funcionario']);
+        return response()->json($os);
+    }
+
+    public function aprovarOs($id)
+    {
+        $os = OrdemServico::where('osid', $id)
+            ->update([
+                'status_atual' => OsStatusInterface::EM_EXECUCAO[0],
+                'statid_atual' => OsStatusInterface::EM_EXECUCAO[1]
+            ]);
+
+        return response()->json([
+            'sucesso' => $os > 0,
+            'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
+        ]);
+    }
+
+    public function finalizarOs(string $id)
+    {
+        $os = OrdemServico::where('osid', $id)
+            ->update([
+                'status_atual' => OsStatusInterface::FINALIZADO[0],
+                'statid_atual' => OsStatusInterface::FINALIZADO[1]
+            ]);
+
+        return response()->json([
+            'sucesso' => $os > 0,
+            'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
+        ]);
+    }
+
+    public function entregarOs(string $id)
+    {
+        $os = OrdemServico::where('osid', $id)
+            ->update([
+                'status_atual' => OsStatusInterface::ENTREGUE[0],
+                'statid_atual' => OsStatusInterface::ENTREGUE[1],
+                'entregue' => OrdemServicoInterface::ENTREGUE,
+            ]);
+
+        return response()->json([
+            'sucesso' => $os > 0,
+            'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
+        ]);
+    }
+
+    public function listarExecucao()
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+            ->join('funcionarios', 'funcionarios.funcid', '=', 'os.funcid')
+            ->whereIn('os.statid_atual', [OsStatusInterface::EM_EXECUCAO[1], OsStatusInterface::FINALIZADO[1]])
+            ->Where('entregue', 0)
+            ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo', 'funcionarios.nome as nome_funcionario']);
+        return response()->json($os);
     }
 }

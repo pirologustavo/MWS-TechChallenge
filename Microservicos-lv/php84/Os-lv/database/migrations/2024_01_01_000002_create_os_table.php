@@ -17,9 +17,11 @@ return new class extends Migration
             $table->integer('carid');
             $table->integer('funcid');
             $table->text('sintomas')->nullable();
+            $table->text('analise')->nullable();
             $table->decimal('valor_total', 10, 2)->default(0);
             $table->string('status_atual')->default('Recebida');
             $table->foreignId('statid_atual')->default(1)->constrained('status', 'statid');
+            $table->integer('entregue')->default(0);
             $table->timestamps();
         });
     }
