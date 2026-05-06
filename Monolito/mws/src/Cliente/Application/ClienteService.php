@@ -7,6 +7,11 @@ use App\Cliente\Infrastructure\ClienteRepository;
 
 class ClienteService implements ClienteServiceInterface
 {
+    private $clienteRepository;
+
+    public function __construct(){
+        $this->clienteRepository = new ClienteRepository();
+    }
     /**
      * @throws Exception
      */
@@ -61,13 +66,18 @@ class ClienteService implements ClienteServiceInterface
     public function salvar($cliente): void
     {
         $dadosValidados = self::validarDados($cliente);
-        (new ClienteRepository)->salvar($dadosValidados);
+        $this->clienteRepository->salvar($dadosValidados);
     }
 
     public function atualizarCliente($id, $dados)
     {
         $dadosValidados = self::validarDados($dados);
-        return (new ClienteRepository())->atualizar($id, $dadosValidados);
+        return $this->clienteRepository->atualizar($id, $dadosValidados);
+    }
+
+    public function deletarCliente($id)
+    {
+        return $this->clienteRepository->deletarCliente($id);
     }
 
     public static function validarNome($nome)
@@ -137,7 +147,7 @@ class ClienteService implements ClienteServiceInterface
      */
     public function listarTodos()
     {
-        return (new ClienteRepository)->listarTodos();
+        return $this->clienteRepository->listarTodos();
     }
 
     /**
@@ -145,6 +155,6 @@ class ClienteService implements ClienteServiceInterface
      */
     public function buscarPorId($id)
     {
-        return (new ClienteRepository)->buscarPorId($id);
+        return $this->clienteRepository->buscarPorId($id);
     }
 }

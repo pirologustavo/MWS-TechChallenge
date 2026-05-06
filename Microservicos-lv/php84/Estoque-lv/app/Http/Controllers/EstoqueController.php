@@ -115,4 +115,27 @@ class EstoqueController extends Controller
             return response()->json(['message' => 'Estoque baixado com sucesso']);
         });
     }
+
+    public function deletarEstoque(string $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $estoque = Estoque::where('estoqid', $id)->first();
+
+            if (!$estoque) {
+                return response()->json(['message' => 'Estoque não encontrado'], 404);
+            }
+
+            $vinculoOS = DB::table('os_itens')->where('estoqid', $id)->exists();
+
+            if ($vinculoOS) {
+                return response()->json([
+                    'message' => 'Não é possível deletar: este item possui histórico em Ordens de Serviço.'
+                ], 422);
+            }
+
+            $estoque->delete();
+
+            return response()->json(['message' => "Estoque id $id foi deletado com sucesso!"]);
+        });
+    }
 }

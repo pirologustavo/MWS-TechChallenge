@@ -7,6 +7,12 @@ use Exception;
 
 class VeiculoService implements VeiculoServiceInterface
 {
+    private $veiculoRepository;
+
+    public function __construct(){
+        $this->veiculoRepository = new VeiculoRepository();
+    }
+
     public function validarVeiculo(array $veiculo) {
         if (empty($veiculo)) {
             throw new Exception("Campos de veículo devem ser preenchidos");
@@ -42,22 +48,27 @@ class VeiculoService implements VeiculoServiceInterface
     public function salvar ($veiculo)
     {
         $dadosValidados = self::validarVeiculo($veiculo);
-        (new VeiculoRepository())->salvar($dadosValidados);
+        $this->veiculoRepository->salvar($dadosValidados);
     }
 
     public function atualizarVeiculo($id, $veiculo)
     {
         $dadosValidados = self::validarVeiculo($veiculo);
-        (new VeiculoRepository())->atualizar($id, $dadosValidados);
+        $this->veiculoRepository->atualizar($id, $dadosValidados);
     }
 
     public function buscarPorId($id)
     {
-        return (new VeiculoRepository)->buscarPorId($id);
+        return $this->veiculoRepository->buscarPorId($id);
     }
 
     public function listarTodos()
     {
-        return (new VeiculoRepository)->listarTodos();
+        return $this->veiculoRepository->listarTodos();
+    }
+
+    public function veiculoEstoque($id)
+    {
+        return $this->veiculoRepository->veiculoEstoque($id);
     }
 }

@@ -35,4 +35,6 @@ interface VeiculoServiceInterface
     public function atualizarVeiculo($id, $veiculo);
 
     public function listarTodos();
+
+    public function veiculoEstoque($id);
 }

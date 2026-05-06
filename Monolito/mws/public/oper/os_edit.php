@@ -32,33 +32,52 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $cliente = $_POST['cliente'] ?? null;
-    $veiculo = $_POST['veiculo'] ?? null;
-    $sintomas = $_POST['sintomas'] ?? null;
-    $mecanico = $_POST['tecnico'] ?? null;
-    $itens = $_POST['itens'] ?? null;
-    $total = $_POST['valor_total'] ?? 0;
+    $acao = $_POST['acao'];
 
-    $os = [
-        'clientid' => $cliente,
-        'carid' => $veiculo,
-        'sintomas' => $sintomas,
-        'funcid' => $mecanico,
-        'itens' => $itens,
-        'valor_total' => $total,
-    ];
+    if ($acao == 'editar') {
+        $cliente = $_POST['cliente'] ?? null;
+        $veiculo = $_POST['veiculo'] ?? null;
+        $sintomas = $_POST['sintomas'] ?? null;
+        $mecanico = $_POST['tecnico'] ?? null;
+        $itens = $_POST['itens'] ?? null;
+        $total = $_POST['valor_total'] ?? 0;
 
-    function atualizarOs(OsServiceInterface $osService, $id, $os) {
-        $osService->atualizarOs($id, $os);
+        $os = [
+                'clientid' => $cliente,
+                'carid' => $veiculo,
+                'sintomas' => $sintomas,
+                'funcid' => $mecanico,
+                'itens' => $itens,
+                'valor_total' => $total,
+        ];
+
+        function atualizarOs(OsServiceInterface $osService, $id, $os) {
+            $osService->atualizarOs($id, $os);
+        }
+
+        try {
+            atualizarOs($osService, $osId, $os);
+
+            header("Location: os_edit.php?osid=" . $osId . "&sucesso=1");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 
-    try {
-        atualizarOs($osService, $osId, $os);
+    if ($acao == 'deletar') {
+        function deletarOs(OsServiceInterface $osService, $id) {
+            $osService->deletarOs($id);
+        }
 
-        header("Location: os_edit.php?osid=" . $osId . "&sucesso=1");
-        exit;
-    } catch (Exception $e) {
-        $mensagemErro = $e->getMessage();
+        try {
+            deletarOs($osService, $osId);
+
+            header("Location: historico_os.php");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 }
 
@@ -159,7 +178,12 @@ require '../header.php';
     </div>
 
     <input type="hidden" name="valor_total" id="input-total-os" value="0">
-    <button type="submit">Editar OS</button>
+    <button type="submit" name="acao" value="editar">Editar OS</button>
+    <button type="submit" name="acao" value="deletar"
+            style="background: red; color: white;"
+            onclick="return confirm('Tem certeza que deseja excluir esta OS?')">
+        Deletar OS
+    </button>
 </form>
 
 <script>

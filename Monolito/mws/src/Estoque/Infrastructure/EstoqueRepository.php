@@ -31,7 +31,7 @@ class EstoqueRepository implements EstoqueRepositoryInterface
         ]);
 
         try {
-            $response = $estoqueApi->get("/api/estoque/bucarPorId/{$id}");
+            $response = $estoqueApi->get("/api/estoque/buscarPorId/{$id}");
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
@@ -123,6 +123,22 @@ class EstoqueRepository implements EstoqueRepositoryInterface
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro ao estornar itens na API de Estoque: " . $e->getMessage());
+        }
+    }
+
+    public function deletarEstoque($id)
+    {
+        $estoqueApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout' => 5.0,
+        ]);
+
+        try {
+            $response = $estoqueApi->post("/api/estoque/deletarEstoque/{$id}");
+
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
         }
     }
 }

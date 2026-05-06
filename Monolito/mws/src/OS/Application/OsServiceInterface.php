@@ -16,6 +16,8 @@ interface OsServiceInterface
 
     public function atualizarOs($id, $os);
 
+    public function deletarOs($id);
+
     public function listarRecebidos();
 
     public function analiseOs($id, $os);

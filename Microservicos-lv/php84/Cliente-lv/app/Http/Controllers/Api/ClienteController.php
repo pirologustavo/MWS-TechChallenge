@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class ClienteController extends Controller
 {
@@ -82,5 +83,20 @@ class ClienteController extends Controller
             'message' => 'Cliente atualizado com sucesso!',
             'data' => $cliente
         ]);
+    }
+
+    public function deletarCliente(string $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $cliente = Cliente::where('clientid', $id)->first();
+
+            if (!$cliente) {
+                return response()->json(['message' => 'Cliente não encontrado'], 404);
+            }
+
+            $cliente->delete();
+
+            return response()->json(['message' => "Cliente id $id foi deletado com sucesso!"]);
+        });
     }
 }

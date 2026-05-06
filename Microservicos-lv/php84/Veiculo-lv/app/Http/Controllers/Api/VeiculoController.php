@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Veiculo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class VeiculoController extends Controller
 {
@@ -71,5 +72,20 @@ class VeiculoController extends Controller
             ->get(['carid', 'modelo', 'placa']);
 
         return response()->json($veiculos);
+    }
+
+    public function deletarVeiculo(string $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $veiculo = Veiculo::where('carid', $id)->first();
+
+            if (!$veiculo) {
+                return response()->json(['message' => 'Veiculo não encontrado'], 404);
+            }
+
+            $veiculo->delete();
+
+            return response()->json(['message' => "Veiculo id $id foi deletado com sucesso!"]);
+        });
     }
 }

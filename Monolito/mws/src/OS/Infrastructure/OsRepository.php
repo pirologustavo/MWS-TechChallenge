@@ -92,6 +92,22 @@ class OsRepository implements OsRepositoryInterface
         }
     }
 
+    public function deletarOs($id)
+    {
+        $osApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout' => 5.0,
+        ]);
+
+        try {
+            $response = $osApi->post("/api/os/deletarOs/{$id}");
+
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
+
     public function listarRecebidos()
     {
         $osApi = new \GuzzleHttp\Client([

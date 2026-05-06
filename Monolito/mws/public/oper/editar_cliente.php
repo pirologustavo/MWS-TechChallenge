@@ -43,40 +43,59 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nome = $_POST['nome'] ?? null;
-    $email = $_POST['email'] ?? null;
-    $cpf = $_POST['cpf'] ?? null;
-    $endereco = $_POST['endereco'] ?? null;
-    $estado = $_POST['estado'] ?? null;
-    $cidade = $_POST['cidade'] ?? null;
-    $cep = $_POST['cep'] ?? null;
-    $telefone = $_POST['telefone'] ?? null;
+    $acao = $_POST["acao"];
+    if ($acao == 'editar') {
+        $nome = $_POST['nome'] ?? null;
+        $email = $_POST['email'] ?? null;
+        $cpf = $_POST['cpf'] ?? null;
+        $endereco = $_POST['endereco'] ?? null;
+        $estado = $_POST['estado'] ?? null;
+        $cidade = $_POST['cidade'] ?? null;
+        $cep = $_POST['cep'] ?? null;
+        $telefone = $_POST['telefone'] ?? null;
 
-    $cliente = [
-        'nome' => $nome,
-        'email' => $email,
-        'cpf' => $cpf,
-        'endereco' => $endereco,
-        'estado' => $estado,
-        'cidade' => $cidade,
-        'cep' => $cep,
-        'telefone' => $telefone
-    ];
+        $cliente = [
+                'nome' => $nome,
+                'email' => $email,
+                'cpf' => $cpf,
+                'endereco' => $endereco,
+                'estado' => $estado,
+                'cidade' => $cidade,
+                'cep' => $cep,
+                'telefone' => $telefone
+        ];
 
-    function atualizarCliente(ClienteServiceInterface $clienteService, $id, array $cliente)
-    {
-        $clienteService->atualizarCliente($id, $cliente);
+        function atualizarCliente(ClienteServiceInterface $clienteService, $id, array $cliente)
+        {
+            $clienteService->atualizarCliente($id, $cliente);
+        }
+
+        try {
+            atualizarCliente($clienteService, $idParaEditar, $cliente);
+
+            header("Location: editar_cliente.php?clientid=" . $idParaEditar . "&sucesso=1");
+            exit;
+        } catch (Exception $ex) {
+            $mensagemErro = $ex->getMessage();
+        }
     }
 
-    try {
-        atualizarCliente($clienteService, $idParaEditar, $cliente);
+    if ($acao == 'deletar') {
+        function deletarCliente(ClienteServiceInterface $clienteService, $id) {
+            $clienteService->deletarCliente($id);
+        }
 
-        header("Location: editar_cliente.php?clientid=" . $idParaEditar . "&sucesso=1");
-        exit;
-    } catch (Exception $ex) {
-        $mensagemErro = $ex->getMessage();
+        try {
+            deletarCliente($clienteService, $idParaEditar);
+
+            header("Location: editar_cliente.php");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 }
+
 
 require '../header.php';
 ?>
@@ -172,8 +191,13 @@ require '../header.php';
             <input type="text" name="telefone" value="<?= $clienteParaEditar->telefone ?>" style="width: 100%">
         </p>
 
-        <button type="submit" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
-        <a href="editar_cliente.php">Voltar para a lista</a>
+        <button type="submit" name="acao" value="editar" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
+        <button type="submit" name="acao" value="deletar"
+                style="background: red; color: white;"
+                onclick="return confirm('Tem certeza que deseja excluir este item?')">
+            Deletar item
+        </button>
+        <a href="editar_cliente.php">Voltar para o estoque</a>
     </form>
 <?php endif; ?>
 

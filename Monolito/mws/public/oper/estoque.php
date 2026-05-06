@@ -40,30 +40,49 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $descricao = $_POST['descricao'] ?? null;
-    $tipo = $_POST['tipo'] ?? null;
-    $qtdAtual = $_POST['qtd_atual'] ?? null;
-    $ano = $_POST['ano'] ?? null;
-    $preco = $_POST['preco'] ?? null;
+    $acao = $_POST["acao"];
 
-    $estoque = [
-        'descricao' => $descricao,
-        'tipo' => $tipo,
-        'quantidade_atual' => $qtdAtual,
-        'valor_venda' => $preco
-    ];
+    if ($acao == 'editar') {
+        $descricao = $_POST['descricao'] ?? null;
+        $tipo = $_POST['tipo'] ?? null;
+        $qtdAtual = $_POST['qtd_atual'] ?? null;
+        $ano = $_POST['ano'] ?? null;
+        $preco = $_POST['preco'] ?? null;
 
-    function processarCadastro(EstoqueServiceInterface $estoqueService, $id, $estoque)
-    {
-        $estoqueService->atualizarEstoque($id, $estoque);
+        $estoque = [
+                'descricao' => $descricao,
+                'tipo' => $tipo,
+                'quantidade_atual' => $qtdAtual,
+                'valor_venda' => $preco
+        ];
+
+        function processarCadastro(EstoqueServiceInterface $estoqueService, $id, $estoque)
+        {
+            $estoqueService->atualizarEstoque($id, $estoque);
+        }
+
+        try {
+            processarCadastro($estoqueService, $idParaEditar, $estoque);
+            header ("Location: estoque.php?estoqid=" . $idParaEditar . "&sucesso=1");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 
-    try {
-        processarCadastro($estoqueService, $idParaEditar, $estoque);
-        header ("Location: estoque.php?estoqid=" . $idParaEditar . "&sucesso=1");
-        exit;
-    } catch (Exception $e) {
-        $mensagemErro = $e->getMessage();
+    if ($acao == 'deletar') {
+        function deletarEstoque(EstoqueServiceInterface $estoqueService, $id) {
+            $estoqueService->deletarEstoque($id);
+        }
+
+        try {
+            deletarEstoque($estoqueService, $idParaEditar);
+
+            header("Location: estoque.php");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 }
 
@@ -151,7 +170,12 @@ require '../header.php';
             <input type="number" name="preco" value="<?= $estoqueParaEditar->valor_venda ?>" style="width: 100%" id="preco" step="0.01" min="0">
         </p>
 
-        <button type="submit" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
+        <button type="submit" name="acao" value="editar" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
+        <button type="submit" name="acao" value="deletar"
+                style="background: red; color: white;"
+                onclick="return confirm('Tem certeza que deseja excluir este item?')">
+            Deletar item
+        </button>
         <a href="estoque.php">Voltar para o estoque</a>
     </form>
 <?php endif; ?>

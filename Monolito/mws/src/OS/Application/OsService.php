@@ -76,6 +76,14 @@ class OsService implements OsServiceInterface
     /**
      * @throws Exception
      */
+    public function deletarOs($id)
+    {
+        return $this->osRepository->deletarOs($id);
+    }
+
+    /**
+     * @throws Exception
+     */
     public function listarRecebidos()
     {
         return $this->osRepository->listarRecebidos();

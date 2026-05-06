@@ -299,4 +299,21 @@ class OrdemServicoController extends Controller
             ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo', 'funcionarios.nome as nome_funcionario']);
         return response()->json($os);
     }
+
+    public function deletarOs(string $id)
+    {
+        return DB::transaction(function () use ($id) {
+            $os = OrdemServico::where('osid', $id)->first();
+
+            if (!$os) {
+                return response()->json(['message' => 'OS não encontrada'], 404);
+            }
+
+            $os->itens()->delete();
+            $os->historicoStatus()->delete();
+            $os->delete();
+
+            return response()->json(['message' => "OS #$id e seus vínculos foram excluídos com sucesso"]);
+        });
+    }
 }

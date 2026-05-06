@@ -79,4 +79,19 @@ class VeiculoRepository implements VeiculoRepositoryInterface
             throw new Exception("Erro na API ao atualizar: " . $e->getMessage());
         }
     }
+
+    public function veiculoEstoque($id)
+    {
+        $veiculoApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout'  => 5.0,
+        ]);
+
+        try {
+            $response = $veiculoApi->post("/api/veiculos/deletarVeiculo/{$id}");
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
 }

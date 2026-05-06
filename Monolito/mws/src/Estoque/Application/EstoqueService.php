@@ -7,6 +7,11 @@ use Exception;
 
 class EstoqueService implements EstoqueServiceInterface
 {
+    private $estoqueRepository;
+
+    public function __construct(){
+        $this->estoqueRepository = new EstoqueRepository();
+    }
     public function validarEstoque($dados)
     {
         if (empty($dados['descricao']) || strlen($dados['descricao']) < 3) {
@@ -34,11 +39,19 @@ class EstoqueService implements EstoqueServiceInterface
         return $dados;
     }
 
+    /**
+     * @throws Exception
+     */
     public function atualizarEstoque($id, $dados)
     {
         $dadosValidados = $this->validarEstoque($dados);
 
-        return (new EstoqueRepository())->atualizar($id, $dadosValidados);
+        return $this->estoqueRepository->atualizar($id, $dadosValidados);
+    }
+
+    public function deletarEstoque($id)
+    {
+        return $this->estoqueRepository->deletarEstoque($id);
     }
 
     /**
@@ -46,7 +59,7 @@ class EstoqueService implements EstoqueServiceInterface
      */
     public function listarTodos()
     {
-        $itens = (new EstoqueRepository)->listarTodos();
+        $itens = $this->estoqueRepository->listarTodos();
 
         foreach ($itens as $item) {
             $item->alerta = ($item->tipo === 'peca' && $item->quantidade_atual <= $item->quantidade_minima);
@@ -55,14 +68,20 @@ class EstoqueService implements EstoqueServiceInterface
         return $itens;
     }
 
+    /**
+     * @throws Exception
+     */
     public function buscarPorId($id)
     {
-        return (new EstoqueRepository())->buscarPorId($id);
+        return $this->estoqueRepository->buscarPorId($id);
     }
 
+    /**
+     * @throws Exception
+     */
     public function salvar ($estoque)
     {
         $dadosValidados = self::validarEstoque($estoque);
-        (new EstoqueRepository())->salvar($dadosValidados);
+        return $this->estoqueRepository->salvar($dadosValidados);
     }
 }

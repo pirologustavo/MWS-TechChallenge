@@ -36,4 +36,6 @@ interface ClienteServiceInterface
     public function listarTodos();
 
     public function salvar($cliente);
+
+    public function deletarCliente($id);
 }

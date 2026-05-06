@@ -41,31 +41,50 @@ try {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $modelo = $_POST['modelo'] ?? null;
-    $marca = $_POST['marca'] ?? null;
-    $placa = $_POST['placa'] ?? null;
-    $ano = $_POST['ano'] ?? null;
-    $cliente = $_POST['clientid'] ?? null;
+    $acao = $_POST["acao"];
 
-    $veiculo = [
-        'modelo' => $modelo,
-        'marca' => $marca,
-        'placa' => $placa,
-        'ano' => $ano,
-        'clientid' => $cliente
-    ];
+    if ($acao == 'editar') {
+        $modelo = $_POST['modelo'] ?? null;
+        $marca = $_POST['marca'] ?? null;
+        $placa = $_POST['placa'] ?? null;
+        $ano = $_POST['ano'] ?? null;
+        $cliente = $_POST['clientid'] ?? null;
 
-    function processarCadastro(VeiculoServiceInterface $veiculoService, $id, $veiculo)
-    {
-        $veiculoService->atualizarVeiculo($id, $veiculo);
+        $veiculo = [
+                'modelo' => $modelo,
+                'marca' => $marca,
+                'placa' => $placa,
+                'ano' => $ano,
+                'clientid' => $cliente
+        ];
+
+        function processarCadastro(VeiculoServiceInterface $veiculoService, $id, $veiculo)
+        {
+            $veiculoService->atualizarVeiculo($id, $veiculo);
+        }
+
+        try {
+            processarCadastro($veiculoService, $idParaEditar, $veiculo);
+            header ("Location: editar_veiculo.php?carid=" . $idParaEditar . "&sucesso=1");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 
-    try {
-        processarCadastro($veiculoService, $idParaEditar, $veiculo);
-        header ("Location: editar_veiculo.php?carid=" . $idParaEditar . "&sucesso=1");
-        exit;
-    } catch (Exception $e) {
-        $mensagemErro = $e->getMessage();
+    if ($acao == 'deletar') {
+        function veiculoEstoque(VeiculoServiceInterface $veiculoService, $id) {
+            $veiculoService->veiculoEstoque($id);
+        }
+
+        try {
+            veiculoEstoque($veiculoService, $idParaEditar);
+
+            header("Location: editar_veiculo.php");
+            exit;
+        } catch (Exception $e) {
+            $mensagemErro = $e->getMessage();
+        }
     }
 }
 
@@ -144,7 +163,12 @@ require '../header.php';
             <input type="text" name="endereco" value="<?= $veiculoParaEditar->nome ?>" style="width: 100%" id="endereco">
         </p>
 
-        <button type="submit" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
+        <button type="submit" name="acao" value="editar" style="background: green; color: white; border: none; padding: 10px;">Salvar Alterações</button>
+        <button type="submit" name="acao" value="deletar"
+                style="background: red; color: white;"
+                onclick="return confirm('Tem certeza que deseja excluir este item?')">
+            Deletar veiculo
+        </button>
         <a href="editar_veiculo.php">Voltar para a lista</a>
     </form>
 <?php endif; ?>

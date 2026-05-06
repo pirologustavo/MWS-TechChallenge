@@ -10,3 +10,4 @@ Route::put('/estoque/atualizarEstoque/{id}', [EstoqueController::class, 'atualiz
 Route::get('/estoque/buscar', [EstoqueController::class, 'buscar']);
 Route::post('/estoque/alterarEstoque', [EstoqueController::class, 'alterarEstoque']);
 Route::post('/estoque/estornarItens', [EstoqueController::class, 'estornarItens']);
+Route::post('estoque/deletarEstoque/{id}', [EstoqueController::class, 'deletarEstoque']);

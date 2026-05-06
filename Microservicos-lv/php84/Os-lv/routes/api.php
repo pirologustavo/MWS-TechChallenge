@@ -16,3 +16,4 @@ Route::post("/os/aprovarOs/{id}", [OrdemServicoController::class, 'aprovarOs']);
 Route::post("/os/listarExecucao", [OrdemServicoController::class, 'listarExecucao']);
 Route::post("/os/finalizarOs/{id}", [OrdemServicoController::class, 'finalizarOs']);
 Route::post("/os/entregar/{id}", [OrdemServicoController::class, 'entregarOs']);
+Route::post("/os/deletarOs/{id}", [OrdemServicoController::class, 'deletarOs']);
