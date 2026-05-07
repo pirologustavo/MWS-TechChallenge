@@ -18,5 +18,14 @@ class FuncionarioSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        DB::table('funcionarios')->insert([
+            'nome' => 'José',
+            'cargo' => 'Mecânico',
+            'usr' => 'tecnico',
+            'password' => Hash::make('123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

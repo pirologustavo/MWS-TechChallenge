@@ -201,8 +201,8 @@ class OrdemServicoController extends Controller
 
             $os->update([
                 'analise'      => $request->input('analise'),
-                'status_atual' => OsStatusInterface::FINALIZADO[0],
-                'statid_atual' => OsStatusInterface::FINALIZADO[1],
+                'status_atual' => OsStatusInterface::AGUARDANDO_APROVACAO[0],
+                'statid_atual' => OsStatusInterface::AGUARDANDO_APROVACAO[1],
                 'valor_total'  => $request->input('valor_total')
             ]);
 
