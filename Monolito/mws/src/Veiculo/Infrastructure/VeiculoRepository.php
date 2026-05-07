@@ -51,7 +51,7 @@ class VeiculoRepository implements VeiculoRepositoryInterface
         ]);
 
         try {
-            $response = $veiculoApi->get("/api/veiculos/bucarPorId/{$id}");
+            $response = $veiculoApi->get("/api/veiculos/buscarPorId/{$id}");
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());

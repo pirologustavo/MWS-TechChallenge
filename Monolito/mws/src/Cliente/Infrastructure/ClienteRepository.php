@@ -54,7 +54,7 @@ class ClienteRepository implements ClienteRepositoryInterface
         ]);
 
         try {
-            $response = $clienteApi->get("/api/clientes/bucarPorId/{$id}");
+            $response = $clienteApi->get("/api/clientes/buscarPorId/{$id}");
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
