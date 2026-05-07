@@ -29,7 +29,7 @@ Foi criado um script de setup automatizado que executa todas as migrations e cri
   
 ### Credenciais de acesso
 Para testar os endpoints que exigem autenticação: <br>
-`Usuário: admin` <br
+`Usuário: admin` <br>
 `Senha: admin123` <br>
 
 ## Testes Automatizados
@@ -41,13 +41,13 @@ Garantimos uma cobertura de testes superior a 80% em todos os domínios. Para ro
 `docker exec -it veiculo-lv-api php artisan test` <br>
 
 ## Documentação de Domínio (DDD)
-A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo: <br>
-`https://www.notion.so/TECH-CHALLENGE-338b36cb511a80cb9c12d5c70c5682c7?source=copy_link` <br>
+A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo:
+[Acesse a Documentação no Notion](https://www.notion.so/TECH-CHALLENGE-338b36cb511a80cb9c12d5c70c5682c7?source=copy_link)
 
 ## Segurança e Vulnerabilidades
 Realizamos scans de segurança utilizando o composer audit
   - Status Atual: 0 vulnerabilidades críticas encontradas no código de produção
 
-Autor
+## Autor
   - Gustavo Pirolo - Cientista da Computação & Trainee Software Development
   - Apelido do Servidor: Gustavo Pirolo - RM371637 
