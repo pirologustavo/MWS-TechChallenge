@@ -2,7 +2,7 @@
 ## MVP - Tech Challenge Fase 1
 Sistema projeto para a solução operacional de oficinas mecânicas, focando na rastreabilidade total do ciclo de vida de uma manutenção, desde a entrada do veículo até a entrega final.
 
-## Arquitetura e Tecnologias
+### Arquitetura e Tecnologias
 A solução foi decomposta em contêineres independentes para garantir alta coesão e isolamento de domínios (Bounded Contexts).
 * **Linguagem:** PHP 8.4 (Laravel Framework) <br>
 * **Banco de Dados:** MySQL 8.0 (Persistência) e SQLite (Testes) <br>
