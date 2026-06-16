@@ -1,25 +1,25 @@
 <?php
 
 namespace App\Veiculo\Infrastructure;
+use App\Shared\Infrastructure\BaseRepository;
 use App\Veiculo\Domain\VeiculoRepositoryInterface;
 use Exception;
 
-class VeiculoRepository implements VeiculoRepositoryInterface
+class VeiculoRepository extends BaseRepository implements VeiculoRepositoryInterface
 {
+    public function __construct()
+    {
+        $this->baseUri = self::URI;
+    }
+    
     public function salvar($veiculo)
     {
-        $veiculoApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 2.0,
-        ]);
+        $veiculoApi = $this->httpClient(2.0);
 
         try {
             $response = $veiculoApi->post('/api/veiculos/salvar', [
                 'json' => $veiculo,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -30,13 +30,12 @@ class VeiculoRepository implements VeiculoRepositoryInterface
 
     public function listarTodos()
     {
-        $veiculoApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $veiculoApi = $this->httpClient();
 
         try {
-            $response = $veiculoApi->get('/api/veiculos/listar');
+            $response = $veiculoApi->get('/api/veiculos/listar', [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -45,13 +44,12 @@ class VeiculoRepository implements VeiculoRepositoryInterface
 
     public function buscarPorId($id)
     {
-        $veiculoApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $veiculoApi = $this->httpClient();
 
         try {
-            $response = $veiculoApi->get("/api/veiculos/buscarPorId/{$id}");
+            $response = $veiculoApi->get("/api/veiculos/buscarPorId/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -60,18 +58,12 @@ class VeiculoRepository implements VeiculoRepositoryInterface
 
     public function atualizar($id, array $dados)
     {
-        $veiculoApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $veiculoApi = $this->httpClient();
 
         try {
             $response = $veiculoApi->put("/api/veiculos/atualizarVeiculo/{$id}", [
                 'json' => $dados,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders(),
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -82,13 +74,12 @@ class VeiculoRepository implements VeiculoRepositoryInterface
 
     public function veiculoEstoque($id)
     {
-        $veiculoApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $veiculoApi = $this->httpClient();
 
         try {
-            $response = $veiculoApi->post("/api/veiculos/deletarVeiculo/{$id}");
+            $response = $veiculoApi->post("/api/veiculos/deletarVeiculo/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());

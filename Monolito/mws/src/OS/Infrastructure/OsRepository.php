@@ -3,24 +3,24 @@
 namespace App\OS\Infrastructure;
 
 use App\OS\Domain\OsRepositoryInterface;
+use App\Shared\Infrastructure\BaseRepository;
 use Exception;
 
-class OsRepository implements OsRepositoryInterface
+class OsRepository extends BaseRepository implements OsRepositoryInterface
 {
+    public function __construct()
+    {
+        $this->baseUri = self::URI;
+    }
+
     public function salvar($os)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 2.0,
-        ]);
+        $osApi = $this->httpClient(2.0);
 
         try {
             $response = $osApi->post('api/os/salvar', [
                 'json' => $os,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept' => 'application/json',
-                ]
+                'headers' => $this->getHeaders(),
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -31,13 +31,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function listarTodos()
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->get('/api/os/listar');
+            $response = $osApi->get('/api/os/listar', [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -46,14 +45,13 @@ class OsRepository implements OsRepositoryInterface
 
     public function buscarPorId($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-            'http_errors' => true,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->get("/api/os/buscarPorId/{$id}");
+            $response = $osApi->get("/api/os/buscarPorId/{$id}", [
+                'headers' => $this->getHeaders(),
+                'http_errors' => true,
+            ]);
             $content = $response->getBody()->getContents();
             $dados = json_decode($content);
 
@@ -69,10 +67,7 @@ class OsRepository implements OsRepositoryInterface
 
     public function atualizarOs($id, $dados)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
             $url = "/api/os/atualizarOs/{$id}";
@@ -81,9 +76,7 @@ class OsRepository implements OsRepositoryInterface
 
             $response = $osApi->post($url, [
                 'json' => $dados,
-                'headers' => [
-                    'Accept' => 'application/json',
-                ]
+                'headers' => $this->getHeaders(),
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -94,13 +87,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function deletarOs($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/deletarOs/{$id}");
+            $response = $osApi->post("/api/os/deletarOs/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
@@ -110,13 +102,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function listarRecebidos()
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->get('/api/os/listarRecebidos');
+            $response = $osApi->get('/api/os/listarRecebidos', [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -125,13 +116,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function statusDiagnostico($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/emDiagnostico/{$id}");
+            $response = $osApi->post("/api/os/emDiagnostico/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -140,18 +130,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function analiseOs($id, $os)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
             $response = $osApi->post("/api/os/analiseOs/{$id}", [
                 'json' => $os,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept' => 'application/json',
-                ]
+                'headers' => $this->getHeaders(),
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -162,13 +146,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function listarAguardandoAprovacao()
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->get('/api/os/listarAguardandoAprovacao');
+            $response = $osApi->get('/api/os/listarAguardandoAprovacao', [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -177,13 +160,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function aprovarOs($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/aprovarOs/{$id}");
+            $response = $osApi->post("/api/os/aprovarOs/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
@@ -193,13 +175,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function finalizarOs($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/finalizarOs/{$id}");
+            $response = $osApi->post("/api/os/finalizarOs/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
@@ -209,13 +190,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function entregarOs($id)
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/entregar/{$id}");
+            $response = $osApi->post("/api/os/entregar/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
@@ -225,13 +205,12 @@ class OsRepository implements OsRepositoryInterface
 
     public function listarEmExecucao()
     {
-        $osApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $osApi = $this->httpClient();
 
         try {
-            $response = $osApi->post("/api/os/listarExecucao");
+            $response = $osApi->post("/api/os/listarExecucao", [
+                'headers' => $this->getHeaders(),
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {

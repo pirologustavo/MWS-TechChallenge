@@ -4,25 +4,25 @@ namespace App\Cliente\Infrastructure;
 
 use App\Cliente\Application\ClienteServiceInterface;
 use App\Cliente\Domain\ClienteRepositoryInterface;
+use App\Shared\Infrastructure\BaseRepository;
 use App\Shared\Infrastructure\DataBase;
 use Exception;
 
-class ClienteRepository implements ClienteRepositoryInterface
+class ClienteRepository extends BaseRepository implements ClienteRepositoryInterface
 {
+    public function __construct()
+    {
+        $this->baseUri = self::URI;
+    }
+
     public function salvar($cliente)
     {
-        $clienteApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 2.0,
-        ]);
+        $clienteApi = $this->httpClient(2.0);
 
         try {
             $response = $clienteApi->post('/api/clientes', [
                 'json' => $cliente,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -33,13 +33,12 @@ class ClienteRepository implements ClienteRepositoryInterface
 
     public function listarTodos()
     {
-        $clienteApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $clienteApi = $this->httpClient();
 
         try {
-            $response = $clienteApi->get('/api/clientes');
+            $response = $clienteApi->get('/api/clientes', [
+                'headers' => $this->getHeaders()
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
@@ -48,13 +47,12 @@ class ClienteRepository implements ClienteRepositoryInterface
 
     public function buscarPorId($id)
     {
-        $clienteApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $clienteApi = $this->httpClient();
 
         try {
-            $response = $clienteApi->get("/api/clientes/buscarPorId/{$id}");
+            $response = $clienteApi->get("/api/clientes/buscarPorId/{$id}", [
+                'headers' => $this->getHeaders()
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
@@ -63,18 +61,12 @@ class ClienteRepository implements ClienteRepositoryInterface
 
     public function atualizar($id, $dados)
     {
-        $clienteApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $clienteApi = $this->httpClient();
 
         try {
             $response = $clienteApi->put("/api/clientes/atualizarCliente/{$id}", [
                 'json' => $dados,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -85,13 +77,27 @@ class ClienteRepository implements ClienteRepositoryInterface
 
     public function deletarCliente($id)
     {
-        $clienteApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $clienteApi = $this->httpClient();
 
         try {
-            $response = $clienteApi->post("/api/clientes/deletarCliente/{$id}");
+            $response = $clienteApi->post("/api/clientes/deletarCliente/{$id}", [
+                'headers' => $this->getHeaders()
+            ]);
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception ("Erro na API: " . $e->getMessage());
+        }
+    }
+
+    public function buscarPorNome($termo)
+    {
+        $clienteApi = $this->httpClient();
+
+        try {
+            $response = $clienteApi->get("api/clientes/buscar/", [
+                'query' => ['q' => $termo],
+                'headers' => $this->getHeaders()
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());

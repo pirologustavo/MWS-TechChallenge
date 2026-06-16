@@ -3,20 +3,24 @@
 namespace App\Estoque\Infrastructure;
 
 use App\Estoque\Domain\EstoqueRepositoryInterface;
+use App\Shared\Infrastructure\BaseRepository;
 use Exception;
 
-class EstoqueRepository implements EstoqueRepositoryInterface
+class EstoqueRepository extends BaseRepository implements EstoqueRepositoryInterface
 {
+    public function __construct()
+    {
+        $this->baseUri = self::URI;
+    }
 
     public function listarTodos()
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $estoqueApi = $this->httpClient();
 
         try {
-            $response = $estoqueApi->get('/api/estoque/listar');
+            $response = $estoqueApi->get('/api/estoque/listar', [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
@@ -25,13 +29,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function buscarPorId($id)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $estoqueApi = $this->httpClient();
 
         try {
-            $response = $estoqueApi->get("/api/estoque/buscarPorId/{$id}");
+            $response = $estoqueApi->get("/api/estoque/buscarPorId/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception ("Erro na API: " . $e->getMessage());
@@ -40,18 +43,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function atualizar($id, $dados)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $estoqueApi = $this->httpClient();
 
         try {
             $response = $estoqueApi->put("/api/estoque/atualizarEstoque/{$id}", [
                 'json' => $dados,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -62,18 +59,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function salvar($estoque)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 2.0,
-        ]);
+        $estoqueApi = $this->httpClient(2.0);
 
         try {
             $response = $estoqueApi->post('/api/estoque/salvar', [
                 'json' => $estoque,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -84,18 +75,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function alterarEstoque($itens)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 2.0,
-        ]);
+        $estoqueApi = $this->httpClient(2.0);
 
         try {
             $response = $estoqueApi->post('/api/estoque/alterarEstoque', [
                 'json' => $itens,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -106,18 +91,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function estornarItens(array $itensFormatados)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout'  => 5.0,
-        ]);
+        $estoqueApi = $this->httpClient();
 
         try {
             $response = $estoqueApi->post('/api/estoque/estornarItens', [
                 'json' => $itensFormatados,
-                'headers' => [
-                    'Authorization' => 'Bearer ' . ($_COOKIE['token'] ?? ''),
-                    'Accept'        => 'application/json',
-                ]
+                'headers' => $this->getHeaders()
             ]);
 
             return json_decode($response->getBody()->getContents());
@@ -128,13 +107,12 @@ class EstoqueRepository implements EstoqueRepositoryInterface
 
     public function deletarEstoque($id)
     {
-        $estoqueApi = new \GuzzleHttp\Client([
-            'base_uri' => self::URI,
-            'timeout' => 5.0,
-        ]);
+        $estoqueApi = $this->httpClient();
 
         try {
-            $response = $estoqueApi->post("/api/estoque/deletarEstoque/{$id}");
+            $response = $estoqueApi->post("/api/estoque/deletarEstoque/{$id}", [
+                'headers' => $this->getHeaders()
+            ]);
 
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
