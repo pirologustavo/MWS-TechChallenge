@@ -7,6 +7,7 @@ use App\Cliente\Domain\ClienteRepositoryInterface;
 use App\Shared\Infrastructure\BaseRepository;
 use App\Shared\Infrastructure\DataBase;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 
 class ClienteRepository extends BaseRepository implements ClienteRepositoryInterface
 {
@@ -89,13 +90,18 @@ class ClienteRepository extends BaseRepository implements ClienteRepositoryInter
         }
     }
 
-    public function buscarPorNome($termo)
+    /**
+     * @param $nome
+     * @return mixed
+     * @throws GuzzleException
+     */
+    public function buscarPorNome($nome)
     {
         $clienteApi = $this->httpClient();
 
         try {
-            $response = $clienteApi->get("api/clientes/buscar/", [
-                'query' => ['q' => $termo],
+            $response = $clienteApi->get("api/clientes/buscar", [
+                'query' => ['q' => $nome],
                 'headers' => $this->getHeaders()
             ]);
             return json_decode($response->getBody()->getContents());

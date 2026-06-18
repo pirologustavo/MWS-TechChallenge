@@ -170,7 +170,7 @@ require '../header.php';
 
         veiculoSelect.html('<option value="">Carregando veículos...</option>');
 
-        fetch(`http://localhost:8002/api/veiculos/buscarVeiculoCliente/${clienteId}`)
+        fetch(`ajax_buscar_veiculos.php?e=${clienteId}`)
             .then(response => response.json())
             .then(data => {
                 let options = '<option value="">Selecione o veículo</option>';
@@ -191,7 +191,7 @@ require '../header.php';
         $('#tecnico').select2({
             minimumInputLength: 3,
             ajax: {
-                url: 'http://localhost:8004/api/funcionario/buscarMecanico',
+                url: 'ajax_buscar_mecanico.php',
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {
@@ -222,7 +222,7 @@ require '../header.php';
         $('#busca_estoque').select2({
             minimumInputLength: 2,
             ajax: {
-                url: 'http://localhost:8003/api/estoque/buscar',
+                url: 'ajax_buscar_estoque.php',
                 dataType: 'json',
                 delay: 250,
                 processResults: function (data) {

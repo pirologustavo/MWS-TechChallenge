@@ -166,7 +166,7 @@ require '../header.php';
         $('#busca_estoque').select2({
             minimumInputLength: 2,
             ajax: {
-                url: 'http://localhost:8003/api/estoque/buscar',
+                url: 'ajax_buscar_estoque.php',
                 dataType: 'json',
                 delay: 250,
                 processResults: (data) => ({

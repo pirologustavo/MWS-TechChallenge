@@ -85,4 +85,18 @@ class VeiculoRepository extends BaseRepository implements VeiculoRepositoryInter
             throw new Exception("Erro na API: " . $e->getMessage());
         }
     }
+
+    public function buscarPorClienteId($id)
+    {
+        $veiculoApi = $this->httpClient();
+
+        try {
+            $response = $veiculoApi->get("/api/veiculos/buscarVeiculoCliente/{$id}", [
+                'headers' => $this->getHeaders(),
+            ]);
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
 }

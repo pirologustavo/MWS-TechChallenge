@@ -125,7 +125,7 @@ require '../header.php';
         $('#cliente_select').select2({
             minimumInputLength: 3,
             ajax: {
-                url: 'http://localhost:8001/api/clientes/buscar',
+                url: 'ajax_buscar_clientes.php',
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {

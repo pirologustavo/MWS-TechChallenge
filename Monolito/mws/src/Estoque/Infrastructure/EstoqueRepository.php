@@ -119,4 +119,20 @@ class EstoqueRepository extends BaseRepository implements EstoqueRepositoryInter
             throw new Exception("Erro na API: " . $e->getMessage());
         }
     }
+
+    public function buscarEstoque($termo)
+    {
+        $estoqueApi = $this->httpClient();
+
+        try {
+            $response = $estoqueApi->get('/api/estoque/buscar', [
+                'query' => ['q' => $termo],
+                'headers' => $this->getHeaders(),
+            ]);
+
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
 }

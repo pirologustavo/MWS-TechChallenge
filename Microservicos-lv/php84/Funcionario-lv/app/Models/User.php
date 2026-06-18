@@ -17,6 +17,8 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
+    protected $table = 'funcionarios';
+    protected $primaryKey = 'funcid';
 
     /**
      * Get the attributes that should be cast.
