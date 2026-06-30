@@ -4,5 +4,5 @@ namespace App\Seguranca\Domain;
 
 interface SegurancaRepositoryInterface
 {
-    public function obterPorCriterio($usuario);
+    const URI = 'http://funcionario-lv';
 }

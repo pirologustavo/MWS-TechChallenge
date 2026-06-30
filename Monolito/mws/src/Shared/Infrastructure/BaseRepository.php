@@ -10,7 +10,7 @@ abstract class BaseRepository
 
     protected function getToken(): string
     {
-        return "1|TLrw7TiAlJ2OVXMHUk0CvsjaYgFWyYRJGV6xV4Ak8e9d2e6c";
+        return $_COOKIE['token'] ?? '';
     }
 
     protected function getHeaders(): array

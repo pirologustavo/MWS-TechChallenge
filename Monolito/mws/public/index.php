@@ -15,14 +15,18 @@ $segurancaService = new SegurancaService();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $segurancaService = new SegurancaService();
-    $token = $segurancaService->validarLogin($usuario, $senha);
+    try {
+        $token = $segurancaService->validarLogin($usuario, $senha);
+    } catch (Exception $e) {
+        throw new Exception($e->getMessage());
+    }
 
     if (!$token) {
         $mensagem = "Usuário ou senha inválidos!";
         exit;
     }
 
-    setcookie("token", $token, time() + 3600, "/", '', false, true);
+    setcookie("token", $token, time() + 3600, "/", "", false, true);
     header("Location: /oper/index.php");
     exit;
 }

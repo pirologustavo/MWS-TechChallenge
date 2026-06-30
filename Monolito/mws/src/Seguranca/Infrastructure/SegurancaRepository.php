@@ -3,21 +3,33 @@
 namespace App\Seguranca\Infrastructure;
 
 use App\Seguranca\Domain\SegurancaRepositoryInterface;
-use App\Shared\Infrastructure\DataBase;
+use App\Shared\Infrastructure\BaseRepository;
+use Exception;
 
-class SegurancaRepository implements SegurancaRepositoryInterface
+class SegurancaRepository extends BaseRepository implements SegurancaRepositoryInterface
 {
-    private DataBase $db;
     public function __construct()
     {
-        $this->db = new DataBase();
+        $this->baseUri = self::URI;
     }
 
-    public function obterPorCriterio($usuario)
+    public function autenticarNoMicroservico($usuario, $senha)
     {
-        $sql = "SELECT * FROM funcionarios WHERE usr = :usuario";
-        $res = $this->db->fetchOne($sql, ["usuario" => $usuario]);
+        $client = $this->httpClient();
 
-        return $res ?: null;
+        try {
+            $response = $client->post('api/login', [
+                'json' => [
+                    'usr' => $usuario,
+                    'password' => $senha
+                ]
+            ]);
+
+            $dados = json_decode($response->getBody()->getContents(), true);
+
+            return $dados['token'] ?? null;
+        } catch (Exception $e) {
+            throw new Exception("Erro de autenticação: " . $e->getMessage());
+        }
     }
 }
