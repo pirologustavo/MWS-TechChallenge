@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Interface\OsStatusInterface;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrcamentoAguardandoAprovacao;
 
 class OrdemServicoController extends Controller
 {
@@ -192,7 +194,6 @@ class OrdemServicoController extends Controller
 
     public function analiseOs(Request $request, $id)
     {
-       # return DB::transaction(function () use ($request, $id) {
             $os = OrdemServico::where('osid', $id)->lockForUpdate()->first();
 
             if (!$os) {
@@ -205,6 +206,14 @@ class OrdemServicoController extends Controller
                 'statid_atual' => OsStatusInterface::AGUARDANDO_APROVACAO[1],
                 'valor_total'  => $request->input('valor_total')
             ]);
+
+            try {
+                $emailDestinatario = $os->email_cliente ?? 'cliente.teste@mwssandbox.com';
+
+                Mail::to($emailDestinatario)->send(new OrcamentoAguardandoAprovacao($os));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erro ao registrar disparo de e-mail para OS {$id}: " . $e->getMessage());
+            }
 
             if ($request->has('itens')) {
                 $itensEnviados = $request->itens;
@@ -233,7 +242,6 @@ class OrdemServicoController extends Controller
             }
 
             return response()->json(['message' => 'Análise finalizada e enviada para aprovação!']);
-       # });
     }
 
     public function listarAguardandoAprovacao()
