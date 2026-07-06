@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Interface\OrdemServicoInterface;
+use App\Mail\OrcamentoEmDiagnostico;
+use App\Mail\OrcamentoFinalizado;
 use App\Models\OrdemServico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Interface\OsStatusInterface;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrcamentoAguardandoAprovacao;
+use App\Mail\OrcamentoAprovado;
 
 class OrdemServicoController extends Controller
 {
@@ -45,7 +48,8 @@ class OrdemServicoController extends Controller
                 $os->itens()->create([
                     'estoqid'        => $item['id'],
                     'quantidade'     => $item['qtd'],
-                    'preco_unitario' => $item['preco']
+                    'valor_unitario' => $item['preco'],
+                    'subtotal'       => $item['qtd'] * $item['preco']
                 ]);
             }
 
@@ -98,7 +102,7 @@ class OrdemServicoController extends Controller
                 'estoque.estoqid as id',
                 'estoque.descricao',
                 'os_itens.quantidade as qtd',
-                'os_itens.preco_unitario as preco'
+                'os_itens.valor_unitario as preco'
             ])
             ->get();
 
@@ -144,7 +148,8 @@ class OrdemServicoController extends Controller
                         ->where('estoqid', $estoqid)
                         ->update([
                             'quantidade'     => $item['qtd'],
-                            'preco_unitario' => $item['preco'],
+                            'valor_unitario' => $item['preco'],
+                            'subtotal'       => $item['qtd'] * $item['preco'],
                             'updated_at'     => now()
                         ]);
                 } else {
@@ -152,7 +157,8 @@ class OrdemServicoController extends Controller
                         'osid'           => $id,
                         'estoqid'        => $estoqid,
                         'quantidade'     => $item['qtd'],
-                        'preco_unitario' => $item['preco'],
+                        'valor_unitario' => $item['preco'],
+                        'subtotal'       => $item['qtd'] * $item['preco'],
                         'created_at'     => now(),
                         'updated_at'     => now()
                     ]);
@@ -186,6 +192,14 @@ class OrdemServicoController extends Controller
                 'statid_atual' => OsStatusInterface::EM_DIAGNOSTICO[1]
             ]);
 
+        try {
+            $emailDestinatario = $os->cliente->email ?? 'cliente.teste@mwssandbox.com';
+
+            Mail::to($emailDestinatario)->send(new OrcamentoEmDiagnostico($id));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao registrar disparo de e-mail para OS {$id}: " . $e->getMessage());
+        }
+
         return response()->json([
             'sucesso' => $os > 0,
             'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
@@ -208,7 +222,7 @@ class OrdemServicoController extends Controller
             ]);
 
             try {
-                $emailDestinatario = $os->email_cliente ?? 'cliente.teste@mwssandbox.com';
+                $emailDestinatario = $os->cliente->email ?? 'cliente.teste@mwssandbox.com';
 
                 Mail::to($emailDestinatario)->send(new OrcamentoAguardandoAprovacao($os));
             } catch (\Exception $e) {
@@ -228,7 +242,8 @@ class OrdemServicoController extends Controller
                         ['osid' => $id, 'estoqid' => $estoqid],
                         [
                             'quantidade'     => $item['qtd'],
-                            'preco_unitario' => $item['preco'],
+                            'valor_unitario' => $item['preco'],
+                            'subtotal'       => $item['qtd'] * $item['preco'],
                             'updated_at'     => now(),
                             'created_at'     => DB::raw('IFNULL(created_at, NOW())')
                         ]
@@ -262,6 +277,14 @@ class OrdemServicoController extends Controller
                 'statid_atual' => OsStatusInterface::EM_EXECUCAO[1]
             ]);
 
+        try {
+            $emailDestinatario = $os->cliente->email ?? 'cliente.teste@mwssandbox.com';
+
+            Mail::to($emailDestinatario)->send(new OrcamentoAprovado($id));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao registrar disparo de e-mail para OS {$id}: " . $e->getMessage());
+        }
+
         return response()->json([
             'sucesso' => $os > 0,
             'message' => $os > 0 ? 'Status atualizado' : 'OS não encontrada'
@@ -275,6 +298,14 @@ class OrdemServicoController extends Controller
                 'status_atual' => OsStatusInterface::FINALIZADO[0],
                 'statid_atual' => OsStatusInterface::FINALIZADO[1]
             ]);
+
+        try {
+            $emailDestinatario = $os->cliente->email ?? 'cliente.teste@mwssandbox.com';
+
+            Mail::to($emailDestinatario)->send(new OrcamentoFinalizado($id));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao registrar disparo de e-mail para OS {$id}: " . $e->getMessage());
+        }
 
         return response()->json([
             'sucesso' => $os > 0,

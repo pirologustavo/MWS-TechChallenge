@@ -22,4 +22,9 @@ class OrdemServico extends Model
     {
         return $this->hasMany(OrdemServicoStatus::class, 'osid', 'osid');
     }
+
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'clientid', 'clientid');
+    }
 }

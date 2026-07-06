@@ -14,22 +14,28 @@ services:
   db:
     image: mysql:8.0
     container_name: mws-db
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     restart: always
     environment:
       MYSQL_DATABASE: mws_db
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_ALLOW_EMPTY_PASSWORD: no
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
     ports:
       - "3307:3306"
     networks:
       - mws-network
     volumes:
-      - ./Monolito/db_data:/var/lib/mysql
+      - mws_db_data:/var/lib/mysql
 
   cliente-lv-api:
     build:
       context: ./Microservicos-lv/php84/Cliente-lv
     container_name: cliente-lv-api
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     working_dir: /var/www/html
     ports:
       - "8001:80"
@@ -46,6 +52,9 @@ services:
     build:
       context: ./Microservicos-lv/php84/Veiculo-lv
     container_name: veiculo-lv-api
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     working_dir: /var/www/html
     ports:
       - "8002:80"
@@ -62,6 +71,9 @@ services:
     build:
       context: ./Microservicos-lv/php84/Estoque-lv
     container_name: estoque-lv-api
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     working_dir: /var/www/html
     ports:
       - "8003:80"
@@ -78,6 +90,9 @@ services:
     build:
       context: ./Microservicos-lv/php84/Funcionario-lv
     container_name: funcionario-lv-api
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     working_dir: /var/www/html
     ports:
       - "8004:80"
@@ -94,6 +109,9 @@ services:
     build:
       context: ./Microservicos-lv/php84/Os-lv
     container_name: os-lv-api
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     working_dir: /var/www/html
     ports:
       - "8005:80"
@@ -105,7 +123,18 @@ services:
           - os-lv
     depends_on:
       - db
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mws-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - mws-network
 
 networks:
   mws-network:
     driver: bridge
+
+volumes:
+  mws_db_data:

@@ -21,13 +21,13 @@ class AuthController extends Controller
             return response()->json(['message' => 'Credenciais inválidas.'], 411);
         }
 
-        // Como FuncUser usa HasApiTokens e Authenticatable, isso aqui roda com perfeição:
+        // Como User usa HasApiTokens e Authenticatable, isso aqui roda com perfeição:
         $token = $user->createToken('mws-token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
             'user' => [
-                'nome'  => $user->nome, // Se na tabela for 'nome', certifique-se de adicionar no #Fillable do FuncUser.php se necessário
+                'nome'  => $user->nome, // Se na tabela for 'nome', certifique-se de adicionar no #Fillable do User.php se necessário
                 'cargo' => $user->cargo
             ]
         ]);

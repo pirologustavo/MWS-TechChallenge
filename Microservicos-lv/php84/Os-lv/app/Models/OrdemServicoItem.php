@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class OrdemServicoItem extends Model
 {
     protected $table = 'os_itens';
-    protected $primaryKey = 'itemid';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'osid', 'estoqid', 'quantidade', 'preco_unitario'
+        'osid',
+        'estoqid',
+        'quantidade',
+        'valor_unitario',
+        'subtotal'
     ];
 
     public function ordemServico()
