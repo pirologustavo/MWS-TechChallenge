@@ -10,4 +10,5 @@ interface OsStatusInterface
     const EM_EXECUCAO = ['Em Execução', 4];
     const FINALIZADO = ['Finalizado', 5];
     const ENTREGUE = ['Entregue', 6];
+    const CANCELADO = ['Cancelado', 7];
 }

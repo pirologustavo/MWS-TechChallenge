@@ -8,6 +8,9 @@ Route::get('/ping', function () {
     return response()->json(['ping' => true]);
 });
 
+Route::post('/os/aprovarOsUsuario/{id}', [OrdemServicoController::class, 'aprovarOsUsuario']);
+Route::post('/os/reprovarOsUsuario/{id}', [OrdemServicoController::class, 'reprovarOsUsuario']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/os/salvar', [OrdemServicoController::class, 'store']);
     Route::get('/os/listar', [OrdemServicoController::class, 'listar']);

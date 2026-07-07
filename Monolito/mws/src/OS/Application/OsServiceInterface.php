@@ -29,4 +29,8 @@ interface OsServiceInterface
     public function entregarOs($id);
 
     public function listarEmExecucao();
+
+    public function aprovarOsUsuario($id);
+
+    public function reprovarOsUsuario($id);
 }

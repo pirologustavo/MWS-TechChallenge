@@ -177,4 +177,14 @@ class OsService implements OsServiceInterface
     {
         return $this->osRepository->listarEmExecucao();
     }
+
+    public function aprovarOsUsuario($id)
+    {
+        return $this->osRepository->aprovarOsUsuario($id);
+    }
+
+    public function reprovarOsUsuario($id)
+    {
+        return $this->osRepository->reprovarOsUsuario($id);
+    }
 }

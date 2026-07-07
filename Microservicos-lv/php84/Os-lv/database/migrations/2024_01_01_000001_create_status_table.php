@@ -24,6 +24,7 @@ return new class extends Migration
             ['statusdesc' => 'Em Execução'],
             ['statusdesc' => 'Finalizado'],
             ['statusdesc' => 'Entregue'],
+            ['statusdesc' => 'Cancelado'],
         ]);
     }
 

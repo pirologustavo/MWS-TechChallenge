@@ -355,4 +355,54 @@ class OrdemServicoController extends Controller
             return response()->json(['message' => "OS #$id e seus vínculos foram excluídos com sucesso"]);
         });
     }
+
+    public function aprovarOsUsuario($id)
+    {
+        $os = OrdemServico::find($id);
+        if (!$os) {
+            return response()->json([
+                'sucesso' => false,
+                'message' => 'Os não encontrada'
+            ], 404);
+        }
+
+        $os->update([
+                'status_atual' => OsStatusInterface::EM_EXECUCAO[0],
+                'statid_atual' => OsStatusInterface::EM_EXECUCAO[1]
+            ]);
+
+        try {
+            $emailDestinatario = $os->cliente->email ?? 'cliente.teste@mwssandbox.com';
+
+            Mail::to($emailDestinatario)->send(new OrcamentoAprovado($id));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao registrar disparo de e-mail para OS {$id}: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'sucesso' => true,
+            'message' => 'Status atualizado'
+        ]);
+    }
+
+    public function reprovarOsUsuario(string $id)
+    {
+        $os = OrdemServico::find($id);
+        if (!$os) {
+            return response()->json([
+                'sucesso' => false,
+                'message' => 'Os não encontrada'
+            ], 404);
+        }
+
+        $os->update([
+            'status_atual' => OsStatusInterface::CANCELADO[0],
+            'statid_atual' => OsStatusInterface::CANCELADO[1]
+        ]);
+
+        return response()->json([
+            'sucesso' => true,
+            'message' => 'Status atualizado'
+        ]);
+    }
 }

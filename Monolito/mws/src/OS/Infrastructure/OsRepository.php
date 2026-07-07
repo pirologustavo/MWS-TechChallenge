@@ -217,4 +217,34 @@ class OsRepository extends BaseRepository implements OsRepositoryInterface
             throw new Exception("Erro na API: " . $e->getMessage());
         }
     }
+
+    public function aprovarOsUsuario($id)
+    {
+        $osApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout'  => 2.0,
+        ]);
+
+        try {
+            $response = $osApi->post("/api/os/aprovarOsUsuario/{$id}");
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
+
+    public function reprovarOsUsuario($id)
+    {
+        $osApi = new \GuzzleHttp\Client([
+            'base_uri' => self::URI,
+            'timeout'  => 2.0,
+        ]);
+
+        try {
+            $response = $osApi->post("/api/os/reprovarOsUsuario/{$id}");
+            return json_decode($response->getBody()->getContents());
+        } catch (Exception $e) {
+            throw new Exception("Erro na API: " . $e->getMessage());
+        }
+    }
 }
