@@ -14,10 +14,41 @@ class OrdemServicoControllerTest extends TestCase
     {
         parent::setUp();
 
+        $this->withoutMiddleware();
+
+        DB::statement('DROP TABLE IF EXISTS os_itens');
+        DB::statement('DROP TABLE IF EXISTS os');
+
         DB::statement('CREATE TABLE clientes (clientid INTEGER PRIMARY KEY, nome TEXT)');
         DB::statement('CREATE TABLE veiculos (carid INTEGER PRIMARY KEY, modelo TEXT, placa TEXT)');
         DB::statement('CREATE TABLE funcionarios (funcid INTEGER PRIMARY KEY, nome TEXT)');
         DB::statement('CREATE TABLE estoque (estoqid INTEGER PRIMARY KEY, descricao TEXT)');
+
+        DB::statement('CREATE TABLE os (
+            osid INTEGER PRIMARY KEY AUTOINCREMENT,
+            clientid INTEGER,
+            carid INTEGER,
+            funcid INTEGER,
+            sintomas TEXT,
+            analise TEXT,
+            status_atual TEXT,
+            statid_atual INTEGER,
+            valor_total DECIMAL(10,2),
+            entregue INTEGER DEFAULT 0,
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP
+        )');
+
+        DB::statement('CREATE TABLE os_itens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            osid INTEGER,
+            estoqid INTEGER,
+            quantidade INTEGER,
+            valor_unitario DECIMAL(10,2),
+            subtotal DECIMAL(10,2),
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP
+        )');
 
         DB::table('clientes')->insert(['clientid' => 1, 'nome' => 'Gustavo Pirolo']);
         DB::table('veiculos')->insert(['carid' => 1, 'modelo' => 'Golf GTI', 'placa' => 'ABC-1234']);
@@ -88,7 +119,7 @@ class OrdemServicoControllerTest extends TestCase
         ]);
 
         DB::table('os_itens')->insert([
-            'osid' => $os->osid, 'estoqid' => 1, 'quantidade' => 1, 'preco_unitario' => 10
+            'osid' => $os->osid, 'estoqid' => 1, 'quantidade' => 1, 'valor_unitario' => 10
         ]);
 
         $response = $this->postJson("/api/os/deletarOs/{$os->osid}");
@@ -155,5 +186,64 @@ class OrdemServicoControllerTest extends TestCase
     {
         $response = $this->putJson('/api/os/atualizarOs/999', ['clientid' => 1]);
         $response->assertStatus(404);
+    }
+
+    /** @test */
+    public function test_deve_aprovar_os_pelo_link_externo_do_cliente_e_atualizar_status()
+    {
+        // 1. Cria uma OS aguardando a decisão do cliente
+        $os = OrdemServico::create([
+            'clientid'     => 1,
+            'carid'        => 1,
+            'funcid'       => 1,
+            'statid_atual' => 3,
+            'status_atual' => 'Aguardando Aprovação',
+            'valor_total'  => 500.00
+        ]);
+
+        $response = $this->postJson("/api/os/aprovarOsUsuario/{$os->osid}");
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('sucesso', true);
+
+        $this->assertDatabaseHas('os', [
+            'osid'         => $os->osid,
+            'status_atual' => 'Em Execução',
+            'statid_atual' => 4
+        ]);
+    }
+
+    /** @test */
+    public function test_deve_reprovar_os_pelo_link_externo_do_cliente_e_cancelar()
+    {
+        $os = OrdemServico::create([
+            'clientid'     => 1,
+            'carid'        => 1,
+            'funcid'       => 1,
+            'statid_atual' => 3,
+            'status_atual' => 'Aguardando Aprovação',
+            'valor_total'  => 500.00
+        ]);
+
+        $response = $this->postJson("/api/os/reprovarOsUsuario/{$os->osid}");
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('sucesso', true);
+
+        $this->assertDatabaseHas('os', [
+            'osid'         => $os->osid,
+            'status_atual' => 'Cancelado',
+            'statid_atual' => 7
+        ]);
+    }
+
+    /** @test */
+    public function test_deve_retornar_404_ao_tentar_aprovar_ou_reprovar_uma_os_inexistente()
+    {
+        $responseAprovar = $this->postJson('/api/os/aprovarOsUsuario/9999');
+        $responseAprovar->assertStatus(404);
+
+        $responseReprovar = $this->postJson('/api/os/reprovarOsUsuario/9999');
+        $responseReprovar->assertStatus(404);
     }
 }

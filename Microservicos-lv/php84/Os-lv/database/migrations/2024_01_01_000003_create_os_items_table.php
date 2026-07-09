@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('osid')->constrained('os', 'osid')->onDelete('cascade');
             $table->integer('estoqid');
             $table->integer('quantidade');
-            $table->decimal('preco_unitario', 10, 2);
+            $table->decimal('valor_unitario', 10, 2);
+            $table->decimal('subtotal', 10, 2);
             $table->timestamps();
         });
     }
