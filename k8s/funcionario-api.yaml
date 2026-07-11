@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: funcionario-lv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: funcionario-lv
+  template:
+    metadata:
+      labels:
+        app: funcionario-lv
+    spec:
+      containers:
+        - name: funcionario-lv
+          image: pirolo/funcionario-api:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: mws-config
+
+            - secretRef:
+                name: mws-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: funcionario-lv
+spec:
+  selector:
+    app: funcionario-lv
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

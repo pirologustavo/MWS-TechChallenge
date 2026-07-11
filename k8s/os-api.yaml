@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: os-lv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: os-lv
+  template:
+    metadata:
+      labels:
+        app: os-lv
+    spec:
+      containers:
+        - name: os-lv
+          image: pirolo/os-api:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: mws-config
+
+            - secretRef:
+                name: mws-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: os-lv
+spec:
+  selector:
+    app: os-lv
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

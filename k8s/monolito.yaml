@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monolito-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monolito
+  template:
+    metadata:
+      labels:
+        app: monolito
+    spec:
+      containers:
+        - name: monolito
+          image: pirolo/monolito:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: mws-config
+
+            - secretRef:
+                name: mws-db-secret
+          env:
+            - name: FUNCIONARIO_API_URL
+              value: "http://funcionario-api-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monolito-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: monolito
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

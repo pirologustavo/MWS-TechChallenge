@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veiculo-lv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: veiculo-lv
+  template:
+    metadata:
+      labels:
+        app: veiculo-lv
+    spec:
+      containers:
+        - name: veiculo-lv
+          image: pirolo/veiculo-api:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: mws-config
+
+            - secretRef:
+                name: mws-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veiculo-lv
+spec:
+  selector:
+    app: veiculo-lv
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
