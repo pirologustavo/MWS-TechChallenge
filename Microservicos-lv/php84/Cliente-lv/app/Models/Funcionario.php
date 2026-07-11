@@ -11,4 +11,22 @@ class Funcionario extends Authenticatable
 
     protected $table = 'funcionarios';
     protected $primaryKey = 'funcid';
+
+    protected $fillable = [
+        'nome',
+        'cargo',
+        'usr',
+        'password'
+    ];
+
+    protected $hidden = [
+        'password'
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
 }
