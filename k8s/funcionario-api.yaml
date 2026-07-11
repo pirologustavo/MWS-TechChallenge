@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: funcionario-lv
-          image: pirolo/funcionario-api:latest
+          image: 955465104750.dkr.ecr.us-east-1.amazonaws.com/funcionario-lv
           ports:
             - containerPort: 80
           envFrom:

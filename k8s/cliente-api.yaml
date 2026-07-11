@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: cliente-lv
-          image: pirolo/cliente-api:latest
+          image: 955465104750.dkr.ecr.us-east-1.amazonaws.com/cliente-lv
           ports:
             - containerPort: 80
           envFrom:
