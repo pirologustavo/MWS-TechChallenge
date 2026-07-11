@@ -41,5 +41,10 @@ jobs:
       - name: Instalar dependências
         run: composer install --no-interaction --prefer-dist
 
+      - name: Criar .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       - name: Executar testes
         run: php artisan test
