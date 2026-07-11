@@ -21,41 +21,73 @@ class OrdemServicoControllerTest extends TestCase
         DB::statement('DROP TABLE IF EXISTS os_itens');
         DB::statement('DROP TABLE IF EXISTS os');
 
-        DB::statement('CREATE TABLE clientes (clientid INTEGER PRIMARY KEY, nome TEXT)');
-        DB::statement('CREATE TABLE veiculos (carid INTEGER PRIMARY KEY, modelo TEXT, placa TEXT)');
-        DB::statement('CREATE TABLE funcionarios (funcid INTEGER PRIMARY KEY, nome TEXT)');
-        DB::statement('CREATE TABLE estoque (estoqid INTEGER PRIMARY KEY, descricao TEXT)');
+        DB::statement('CREATE TABLE clientes (
+        clientid INTEGER PRIMARY KEY,
+        nome TEXT
+        )');
+
+        DB::statement('CREATE TABLE veiculos (
+        carid INTEGER PRIMARY KEY,
+        modelo TEXT,
+        placa TEXT
+        )');
+
+        DB::statement('CREATE TABLE estoque (
+        estoqid INTEGER PRIMARY KEY,
+        descricao TEXT
+        )');
 
         DB::statement('CREATE TABLE os (
-            osid INTEGER PRIMARY KEY AUTOINCREMENT,
-            clientid INTEGER,
-            carid INTEGER,
-            funcid INTEGER,
-            sintomas TEXT,
-            analise TEXT,
-            status_atual TEXT,
-            statid_atual INTEGER,
-            valor_total DECIMAL(10,2),
-            entregue INTEGER DEFAULT 0,
-            created_at TIMESTAMP,
-            updated_at TIMESTAMP
+        osid INTEGER PRIMARY KEY AUTOINCREMENT,
+        clientid INTEGER,
+        carid INTEGER,
+        funcid INTEGER,
+        sintomas TEXT,
+        analise TEXT,
+        status_atual TEXT,
+        statid_atual INTEGER,
+        valor_total DECIMAL(10,2),
+        entregue INTEGER DEFAULT 0,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
         )');
 
         DB::statement('CREATE TABLE os_itens (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            osid INTEGER,
-            estoqid INTEGER,
-            quantidade INTEGER,
-            valor_unitario DECIMAL(10,2),
-            subtotal DECIMAL(10,2),
-            created_at TIMESTAMP,
-            updated_at TIMESTAMP
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        osid INTEGER,
+        estoqid INTEGER,
+        quantidade INTEGER,
+        valor_unitario DECIMAL(10,2),
+        subtotal DECIMAL(10,2),
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
         )');
 
-        DB::table('clientes')->insert(['clientid' => 1, 'nome' => 'Gustavo Pirolo']);
-        DB::table('veiculos')->insert(['carid' => 1, 'modelo' => 'Golf GTI', 'placa' => 'ABC-1234']);
-        DB::table('funcionarios')->insert(['funcid' => 1, 'nome' => 'Mecânico Claudio']);
-        DB::table('estoque')->insert(['estoqid' => 1, 'descricao' => 'Amortecedor']);
+
+        DB::table('clientes')->insert([
+            'clientid' => 1,
+            'nome' => 'Gustavo Pirolo'
+        ]);
+
+        DB::table('veiculos')->insert([
+            'carid' => 1,
+            'modelo' => 'Golf GTI',
+            'placa' => 'ABC-1234'
+        ]);
+
+        DB::table('funcionarios')->insert([
+            'funcid' => 1,
+            'nome' => 'Mecânico Claudio',
+            'cargo' => 'Mecânico',
+            'usr' => 'claudio',
+            'password' => bcrypt('123')
+        ]);
+
+        DB::table('estoque')->insert([
+            'estoqid' => 1,
+            'descricao' => 'Amortecedor'
+        ]);
+
 
         $funcionario = Funcionario::create([
             'nome' => 'Administrador',
