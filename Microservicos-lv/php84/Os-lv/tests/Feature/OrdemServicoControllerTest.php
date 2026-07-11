@@ -6,6 +6,8 @@ use App\Models\OrdemServico;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
+use App\Models\Funcionario;
 
 class OrdemServicoControllerTest extends TestCase
 {
@@ -54,6 +56,15 @@ class OrdemServicoControllerTest extends TestCase
         DB::table('veiculos')->insert(['carid' => 1, 'modelo' => 'Golf GTI', 'placa' => 'ABC-1234']);
         DB::table('funcionarios')->insert(['funcid' => 1, 'nome' => 'Mecânico Claudio']);
         DB::table('estoque')->insert(['estoqid' => 1, 'descricao' => 'Amortecedor']);
+
+        $funcionario = Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
     }
 
     /** @test */
@@ -191,7 +202,6 @@ class OrdemServicoControllerTest extends TestCase
     /** @test */
     public function test_deve_aprovar_os_pelo_link_externo_do_cliente_e_atualizar_status()
     {
-        // 1. Cria uma OS aguardando a decisão do cliente
         $os = OrdemServico::create([
             'clientid'     => 1,
             'carid'        => 1,

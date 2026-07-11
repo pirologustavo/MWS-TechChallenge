@@ -11,26 +11,36 @@ class FuncionarioControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $funcionario = Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
+    }
+
     /** @test */
     public function test_deve_listar_todos_os_funcionarios_com_campos_especificos()
     {
-        $funcionario = Funcionario::create([
+        Funcionario::create([
             'nome' => 'Gustavo Pirolo',
             'cargo' => 'Desenvolvedor',
             'usr' => 'gustavo.pirolo',
             'password' => bcrypt('123')
         ]);
 
-        Sanctum::actingAs($funcionario);
-
-        $funcionario = Funcionario::create([
+        Funcionario::create([
             'nome' => 'Erikson',
             'cargo' => 'Gerente',
             'usr' => 'erikson',
             'password' => bcrypt('123')
         ]);
-
-        Sanctum::actingAs($funcionario);
 
         $response = $this->getJson('/api/funcionario');
 
@@ -45,23 +55,19 @@ class FuncionarioControllerTest extends TestCase
     /** @test */
     public function test_deve_buscar_apenas_funcionarios_com_cargo_mecanico()
     {
-        $funcionario = Funcionario::create([
+        Funcionario::create([
             'nome' => 'Claudio Mecanico',
             'cargo' => 'Mecânico',
             'usr' => 'claudio.m',
             'password' => 'secret'
         ]);
 
-        Sanctum::actingAs($funcionario);
-
-        $funcionario = Funcionario::create([
+        Funcionario::create([
             'nome' => 'Claudio Atendente',
             'cargo' => 'Atendente',
             'usr' => 'claudio.a',
             'password' => 'secret'
         ]);
-
-        Sanctum::actingAs($funcionario);
 
         $response = $this->getJson('/api/funcionario/buscarMecanico?q=Claudio');
 
@@ -79,8 +85,6 @@ class FuncionarioControllerTest extends TestCase
             'usr' => 'joao.m',
             'password' => 'secret'
         ]);
-
-        Sanctum::actingAs($funcionario);
 
         $response = $this->getJson('/api/funcionario/buscarMecanico?q=Inexistente');
 

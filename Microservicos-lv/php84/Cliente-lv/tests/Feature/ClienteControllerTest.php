@@ -5,10 +5,26 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Cliente;
+use Laravel\Sanctum\Sanctum;
+use App\Models\Funcionario;
 
 class ClienteControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $funcionario = Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
+    }
 
     /** @test */
     public function test_deve_cadastrar_um_cliente_com_sucesso()
@@ -108,6 +124,14 @@ class ClienteControllerTest extends TestCase
     /** @test */
     public function test_deve_deletar_um_cliente_com_sucesso()
     {
+        $funcionario = \App\Models\Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
         $cliente = Cliente::create(['nome' => 'Para Deletar', 'email' => 'd@d.com', 'cpf' => '3', 'cep' => '1', 'endereco' => '1', 'estado' => 'SP', 'cidade' => '1', 'telefone' => '1']);
 
         $response = $this->postJson("/api/clientes/deletarCliente/{$cliente->clientid}");

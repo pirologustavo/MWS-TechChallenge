@@ -6,6 +6,8 @@ use App\Models\Veiculo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Laravel\Sanctum\Sanctum;
+use App\Models\Funcionario;
 
 class VeiculoControllerTest extends TestCase
 {
@@ -16,6 +18,15 @@ class VeiculoControllerTest extends TestCase
         parent::setUp();
         DB::statement('CREATE TABLE clientes (clientid INTEGER PRIMARY KEY, nome TEXT)');
         DB::table('clientes')->insert(['clientid' => 1, 'nome' => 'Gustavo Pirolo']);
+
+        $funcionario = Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
     }
 
     /** @test */

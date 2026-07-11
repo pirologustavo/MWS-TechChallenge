@@ -3,10 +3,27 @@
 namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use App\Models\Funcionario;
 
 class EstoqueControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $funcionario = Funcionario::create([
+            'nome' => 'Administrador',
+            'cargo' => 'Gerente',
+            'usr' => 'admin',
+            'password' => bcrypt('123')
+        ]);
+
+        Sanctum::actingAs($funcionario);
+    }
+
     /** @test */
     public function test_deve_salvar_um_item_com_sucesso()
     {
