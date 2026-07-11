@@ -18,15 +18,4 @@ class Funcionario extends Authenticatable
         'usr',
         'password'
     ];
-
-    protected $hidden = [
-        'password'
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'password' => 'hashed',
-        ];
-    }
 }
