@@ -1,13 +1,26 @@
-name: AWS Connection Test
+name: Laravel CD
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  test-aws:
+
+  deploy:
+
     runs-on: ubuntu-latest
 
+    env:
+      AWS_REGION: us-east-1
+      ECR_REGISTRY: 955465104750.dkr.ecr.us-east-1.amazonaws.com
+
     steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -16,5 +29,119 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Test AWS identity
-        run: aws sts get-caller-identity
+
+      - name: Login AWS ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+
+      - name: Build and Push Cliente
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/cliente-lv:${{ github.sha }} \
+          ./Microservicos-lv/php84/Cliente-lv
+
+          docker push \
+          $ECR_REGISTRY/cliente-lv:${{ github.sha }}
+
+
+      - name: Build and Push Veiculo
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/veiculo-lv:${{ github.sha }} \
+          ./Microservicos-lv/php84/Veiculo-lv
+
+          docker push \
+          $ECR_REGISTRY/veiculo-lv:${{ github.sha }}
+
+
+      - name: Build and Push Estoque
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/estoque-lv:${{ github.sha }} \
+          ./Microservicos-lv/php84/Estoque-lv
+
+          docker push \
+          $ECR_REGISTRY/estoque-lv:${{ github.sha }}
+
+
+      - name: Build and Push Funcionario
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/funcionario-lv:${{ github.sha }} \
+          ./Microservicos-lv/php84/Funcionario-lv
+
+          docker push \
+          $ECR_REGISTRY/funcionario-lv:${{ github.sha }}
+
+
+      - name: Build and Push OS
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/os-lv:${{ github.sha }} \
+          ./Microservicos-lv/php84/Os-lv
+
+          docker push \
+          $ECR_REGISTRY/os-lv:${{ github.sha }}
+
+
+      - name: Build and Push Monolito
+        run: |
+          docker build \
+          -t $ECR_REGISTRY/monolito:${{ github.sha }} \
+          ./Monolito
+
+          docker push \
+          $ECR_REGISTRY/monolito:${{ github.sha }}
+
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig \
+          --name mws-cluster \
+          --region $AWS_REGION
+
+
+      - name: Deploy Cliente
+        run: |
+          kubectl set image deployment/cliente-lv \
+          cliente-lv=$ECR_REGISTRY/cliente-lv:${{ github.sha }}
+
+
+      - name: Deploy Veiculo
+        run: |
+          kubectl set image deployment/veiculo-lv \
+          veiculo-lv=$ECR_REGISTRY/veiculo-lv:${{ github.sha }}
+
+
+      - name: Deploy Estoque
+        run: |
+          kubectl set image deployment/estoque-lv \
+          estoque-lv=$ECR_REGISTRY/estoque-lv:${{ github.sha }}
+
+
+      - name: Deploy Funcionario
+        run: |
+          kubectl set image deployment/funcionario-lv \
+          funcionario-lv=$ECR_REGISTRY/funcionario-lv:${{ github.sha }}
+
+
+      - name: Deploy OS
+        run: |
+          kubectl set image deployment/os-lv \
+          os-lv=$ECR_REGISTRY/os-lv:${{ github.sha }}
+
+
+      - name: Deploy Monolito
+        run: |
+          kubectl set image deployment/monolito-deployment \
+          monolito=$ECR_REGISTRY/monolito:${{ github.sha }}
+
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/cliente-lv
+          kubectl rollout status deployment/veiculo-lv
+          kubectl rollout status deployment/estoque-lv
+          kubectl rollout status deployment/funcionario-lv
+          kubectl rollout status deployment/os-lv
+          kubectl rollout status deployment/monolito-deployment
