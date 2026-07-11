@@ -45,7 +45,7 @@ class FuncionarioControllerTest extends TestCase
         $response = $this->getJson('/api/funcionario');
 
         $response->assertStatus(200);
-        $response->assertJsonCount(2);
+        $response->assertJsonCount(3);
 
         $response->assertJsonStructure([
             '*' => ['funcid', 'nome', 'cargo']
