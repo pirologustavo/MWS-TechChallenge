@@ -48,6 +48,25 @@ A documentação completa, incluindo o Event Storming, Mapa de Contexto e Lingua
 Realizamos scans de segurança utilizando o composer audit
   - Status Atual: 0 vulnerabilidades críticas encontradas no código de produção
 
+## CI/CD
+
+O projeto possui pipeline automatizado utilizando GitHub Actions.
+
+Fluxo:
+
+1. Pull Request / Push na branch main
+2. Execução dos testes automatizados
+3. Build das imagens Docker
+4. Publicação no Amazon ECR
+5. Deploy automático no Amazon EKS
+
+Tecnologias:
+
+- GitHub Actions
+- Docker
+- Amazon ECR
+- Amazon EKS
+
 ## Autor
   - Gustavo Pirolo - Cientista da Computação & Trainee Software Development
   - Apelido do Servidor: Gustavo Pirolo - RM371637 
