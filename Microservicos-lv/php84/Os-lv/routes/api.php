@@ -10,6 +10,7 @@ Route::get('/ping', function () {
 
 Route::post('/os/aprovarOsUsuario/{id}', [OrdemServicoController::class, 'aprovarOsUsuario']);
 Route::post('/os/reprovarOsUsuario/{id}', [OrdemServicoController::class, 'reprovarOsUsuario']);
+Route::get("/os/cliente/os/{cpf}", [OrdemServicoController::class, 'verificarOsCliente']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/os/salvar', [OrdemServicoController::class, 'store']);

@@ -23,6 +23,13 @@ spec:
 
             - secretRef:
                 name: mws-db-secret
+          env:
+            - name: APP_URL
+              value: "http://localhost:8080"
+            - name: ASSET_URL
+              value: "http://localhost:8080"
+            - name: TRUSTED_PROXIES
+              value: "*"
 ---
 apiVersion: v1
 kind: Service

@@ -405,4 +405,13 @@ class OrdemServicoController extends Controller
             'message' => 'Status atualizado'
         ]);
     }
+
+    public function verificarOsCliente(string $cpf)
+    {
+        $os = OrdemServico::join('clientes', 'clientes.clientid', '=', 'os.clientid')
+            ->join('veiculos', 'veiculos.carid', '=', 'os.carid')
+            ->where('clientes.cpf', $cpf)
+            ->get(['os.*', 'clientes.nome as nome_cliente', 'veiculos.modelo']);
+        return response()->json($os);
+    }
 }
