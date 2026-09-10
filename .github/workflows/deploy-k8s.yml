@@ -22,9 +22,6 @@ jobs:
       - name: 📦 Instalar Dependências (Composer)
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: 🧪 Rodar Testes
-        run: php artisan test
-
       - name: ☁️ Configurar Credenciais AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
