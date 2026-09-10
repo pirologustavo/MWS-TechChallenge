@@ -13,7 +13,7 @@ jobs:
 
     env:
       AWS_REGION: us-east-1
-      ECR_REGISTRY: 955465104750.dkr.ecr.us-east-1.amazonaws.com
+      ECR_REGISTRY: 646417168660.dkr.ecr.us-east-1.amazonaws.com
 
     steps:
 
