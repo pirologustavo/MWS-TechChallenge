@@ -1,0 +1,216 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cliente-api
+spec:
+  selector:
+    app: cliente-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cliente-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cliente-api
+  template:
+    metadata:
+      labels:
+        app: cliente-api
+    spec:
+      containers:
+        - name: cliente-api
+          image: pirolo/cliente-api:v2
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_CONNECTION
+              value: mysql
+            - name: DB_HOST
+              value: mws-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: mws_db
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: root
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veiculo-api
+spec:
+  selector:
+    app: veiculo-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veiculo-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: veiculo-api
+  template:
+    metadata:
+      labels:
+        app: veiculo-api
+    spec:
+      containers:
+        - name: veiculo-api
+          image: pirolo/veiculo-api:v2
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_CONNECTION
+              value: mysql
+            - name: DB_HOST
+              value: mws-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: mws_db
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: root
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estoque-api
+spec:
+  selector:
+    app: estoque-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estoque-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: estoque-api
+  template:
+    metadata:
+      labels:
+        app: estoque-api
+    spec:
+      containers:
+        - name: estoque-api
+          image: pirolo/estoque-api:v2
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_CONNECTION
+              value: mysql
+            - name: DB_HOST
+              value: mws-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: mws_db
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: root
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: os-api
+spec:
+  selector:
+    app: os-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: os-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: os-api
+  template:
+    metadata:
+      labels:
+        app: os-api
+    spec:
+      containers:
+        - name: os-api
+          image: pirolo/os-api:v2
+          ports:
+            - containerPort: 80
+          env:
+            - name: DB_CONNECTION
+              value: mysql
+            - name: DB_HOST
+              value: mws-db
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: mws_db
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: root
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monolito
+spec:
+  selector:
+    app: monolito
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monolito
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monolito
+  template:
+    metadata:
+      labels:
+        app: monolito
+    spec:
+      containers:
+        - name: monolito
+          image: pirolo/monolito:v2
+          ports:
+            - containerPort: 80
