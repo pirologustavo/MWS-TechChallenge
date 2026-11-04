@@ -22,7 +22,18 @@ spec:
                 name: mws-config
 
             - secretRef:
-                name: mws-db-secret
+                name: mws-estoque-service-secret
+          env:
+            - name: DB_DATABASE
+              value: estoque_db
+            - name: CLIENTE_API_URL
+              value: http://cliente-lv
+            - name: VEICULO_API_URL
+              value: http://veiculo-lv
+            - name: FUNCIONARIO_API_URL
+              value: http://funcionario-lv
+            - name: ESTOQUE_API_URL
+              value: http://estoque-lv
 ---
 apiVersion: v1
 kind: Service

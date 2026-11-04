@@ -336,3 +336,13 @@ O Kubernetes é responsável somente pela camada de execução e gerenciamento d
 A criação da infraestrutura AWS (EKS, RDS e recursos relacionados) é realizada através do Terraform.
 
 A aplicação Laravel, infraestrutura e pipeline CI/CD possuem responsabilidades separadas para facilitar manutenção, escalabilidade e evolução do projeto.
+# Banco por serviço e credenciais
+
+Antes de aplicar os deployments:
+
+1. Provisione `cliente_db`, `veiculo_db`, `estoque_db`, `funcionario_db` e `os_db` no MySQL/RDS e crie os usuários com privilégios somente no schema correspondente. O SQL de referência está em `k8s/database-isolation.sql.example`.
+2. Configure os mesmos usuários e senhas no arquivo `k8s/mws-service-secrets.yaml.example`, gere uma `APP_KEY` para cada serviço, troque o token interno por um valor aleatório compartilhado entre as APIs e defina `OS_APPROVAL_SECRET` igual no serviço de OS e no Monólito. Não aplique o arquivo com valores de exemplo.
+3. Aponte `DB_HOST` em `k8s/mws-configmap.yaml` para o endpoint MySQL, aplique o ConfigMap e os secrets, execute as migrations de cada serviço e faça o backfill do banco legado antes de liberar tráfego.
+4. Aplique os deployments. Cada serviço usa seu schema e chama as demais APIs por seus Services Kubernetes (`http://cliente-lv`, `http://veiculo-lv`, `http://funcionario-lv`, `http://estoque-lv`).
+
+Faça backup dos dados legados e pare gravações durante o backfill.

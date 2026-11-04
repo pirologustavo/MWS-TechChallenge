@@ -21,8 +21,12 @@ spec:
             - configMapRef:
                 name: mws-config
 
-            - secretRef:
-                name: mws-db-secret
+          env:
+            - name: OS_APPROVAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mws-os-service-secret
+                  key: OS_APPROVAL_SECRET
 ---
 apiVersion: v1
 kind: Service

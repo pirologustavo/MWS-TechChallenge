@@ -21,17 +21,17 @@ A solução foi decomposta em contêineres independentes para garantir alta coes
 
 ## Como executar o projeto
 ### Opção 1: Ambiente Local (Docker Compose)
-Na raiz do projeto execute: <br>
+Copie `docker-compose.env.example` para `.env`, substitua os segredos e mantenha `MYSQL_ROOT_PASSWORD` compatível com o volume MySQL existente. Depois execute na raiz: <br>
 `docker-compose up -d`
   
 ### Configurar os Bancos de Dados e Seeders
-Foi criado um script de setup automatizado que executa todas as migrations e cria um usuário administrador padrão execute: <br>
+O setup cria os schemas isolados, executa as migrations e, quando há dados legados em `mws_db`, copia os dados preservando IDs e snapshots. Faça backup e pare gravações no banco legado antes do backfill; o script recusa destinos não vazios. Em ambiente novo, cria o usuário inicial. Execute: <br>
 `chmod +x setup.sh` <br>
 `./setup.sh` <br>
 
 ## Como executar o projeto
 ### Opção 2: Ambiente Clusterizado (Kubernetes)
-Para deploy no cluster Kubernetes (Minikube ou EKS), aplique os manifests da pasta k8s/ <br>
+Para deploy no cluster Kubernetes (Minikube ou EKS), provisione primeiro um schema e usuário por serviço no MySQL/RDS, preencha e aplique `k8s/mws-service-secrets.yaml.example` com segredos reais e ajuste o `DB_HOST` em `k8s/mws-configmap.yaml`. Faça backup e backfill dos dados antes de liberar tráfego. Depois aplique os manifests da pasta k8s/ <br>
 `kubectl apply -f k8s/` <br>
 
 Para acessar o painel de interceptação de e-mails de desenvolvimento, redirecione a porta do MailHog:
@@ -43,15 +43,19 @@ Para testar os endpoints que exigem autenticação: <br>
 `Senha: admin123` <br>
 
 ## Testes Automatizados
-Garantimos uma cobertura de testes superior a 80% em todos os domínios. Para rodar os testes de um módulo específico: <br>
-`docker exec -it cliente-lv-api php artisan test` <br>
-`docker exec -it estoque-lv-api php artisan test `<br>
-`docker exec -it funcionario-lv-api php artisan test` <br>
-`docker exec -it os-lv-api php artisan test` <br>
-`docker exec -it veiculo-lv-api php artisan test` <br>
+Os testes usam SQLite em memória para não acessar os bancos dos serviços. Execute todos com:
+
+```bash
+for service in cliente-lv-api veiculo-lv-api estoque-lv-api funcionario-lv-api os-lv-api; do
+  docker compose exec -T -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= "$service" php artisan test || break
+done
+```
+
+Para testar apenas um serviço, use o mesmo comando substituindo `$service` pelo nome do container.
 
 ## Documentação e APIs
 A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo:
+[Estratégia de comunicação entre microsserviços](./docs/estrategia-comunicacao-microsservicos.md)
 [Acesse a Documentação no Notion](https://www.notion.so/TECH-CHALLENGE-338b36cb511a80cb9c12d5c70c5682c7?source=copy_link)
 [Endpoints (Postman)] (https://gustavo-5520387.postman.co/workspace/Gustavo's-
 Workspace~e01e23b1-b0c9-4148-8bea-f931ea6d3628/collection/45952571-cfa04a96-

@@ -22,8 +22,20 @@ spec:
                 name: mws-config
 
             - secretRef:
-                name: mws-db-secret
+                name: mws-os-service-secret
           env:
+            - name: DB_DATABASE
+              value: os_db
+            - name: CLIENTE_API_URL
+              value: http://cliente-lv
+            - name: VEICULO_API_URL
+              value: http://veiculo-lv
+            - name: FUNCIONARIO_API_URL
+              value: http://funcionario-lv
+            - name: ESTOQUE_API_URL
+              value: http://estoque-lv
+            - name: MONOLITO_URL
+              value: https://mws.example.com
             - name: APP_URL
               value: "http://localhost:8080"
             - name: ASSET_URL

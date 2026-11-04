@@ -6,6 +6,8 @@ services:
     container_name: mws-monolito
     ports:
       - "8080:80"
+    environment:
+      OS_APPROVAL_SECRET: ${OS_APPROVAL_SECRET:-local-approval-secret-change-me}
     volumes:
       - ./Monolito/mws:/var/www/html
     networks:
@@ -20,7 +22,7 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: mws_db
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_ALLOW_EMPTY_PASSWORD: "no"
     ports:
       - "3307:3306"
@@ -28,6 +30,29 @@ services:
       - mws-network
     volumes:
       - mws_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  db-init:
+    image: mysql:8.0
+    container_name: mws-db-init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      CLIENTE_DB_PASSWORD: ${CLIENTE_DB_PASSWORD:-local-cliente-change-me}
+      VEICULO_DB_PASSWORD: ${VEICULO_DB_PASSWORD:-local-veiculo-change-me}
+      ESTOQUE_DB_PASSWORD: ${ESTOQUE_DB_PASSWORD:-local-estoque-change-me}
+      FUNCIONARIO_DB_PASSWORD: ${FUNCIONARIO_DB_PASSWORD:-local-funcionario-change-me}
+      OS_DB_PASSWORD: ${OS_DB_PASSWORD:-local-os-change-me}
+    volumes:
+      - ./scripts/provision-service-databases.sh:/provision-service-databases.sh:ro
+    entrypoint: ["bash", "/provision-service-databases.sh"]
+    network_mode: "service:db"
 
   cliente-lv-api:
     build:
@@ -37,6 +62,18 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     working_dir: /var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: cliente_db
+      DB_USERNAME: cliente_app
+      DB_PASSWORD: ${CLIENTE_DB_PASSWORD:-local-cliente-change-me}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
+      CLIENTE_API_URL: http://cliente-lv
+      VEICULO_API_URL: http://veiculo-lv
+      FUNCIONARIO_API_URL: http://funcionario-lv
+      ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8001:80"
     volumes:
@@ -46,7 +83,8 @@ services:
         aliases:
           - cliente-lv
     depends_on:
-      - db
+      db-init:
+        condition: service_completed_successfully
 
   veiculo-lv-api:
     build:
@@ -56,6 +94,18 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     working_dir: /var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: veiculo_db
+      DB_USERNAME: veiculo_app
+      DB_PASSWORD: ${VEICULO_DB_PASSWORD:-local-veiculo-change-me}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
+      CLIENTE_API_URL: http://cliente-lv
+      VEICULO_API_URL: http://veiculo-lv
+      FUNCIONARIO_API_URL: http://funcionario-lv
+      ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8002:80"
     volumes:
@@ -65,7 +115,8 @@ services:
         aliases:
           - veiculo-lv
     depends_on:
-      - db
+      db-init:
+        condition: service_completed_successfully
 
   estoque-lv-api:
     build:
@@ -75,6 +126,18 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     working_dir: /var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: estoque_db
+      DB_USERNAME: estoque_app
+      DB_PASSWORD: ${ESTOQUE_DB_PASSWORD:-local-estoque-change-me}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
+      CLIENTE_API_URL: http://cliente-lv
+      VEICULO_API_URL: http://veiculo-lv
+      FUNCIONARIO_API_URL: http://funcionario-lv
+      ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8003:80"
     volumes:
@@ -84,7 +147,8 @@ services:
         aliases:
           - estoque-lv
     depends_on:
-      - db
+      db-init:
+        condition: service_completed_successfully
 
   funcionario-lv-api:
     build:
@@ -94,6 +158,18 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     working_dir: /var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: funcionario_db
+      DB_USERNAME: funcionario_app
+      DB_PASSWORD: ${FUNCIONARIO_DB_PASSWORD:-local-funcionario-change-me}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
+      CLIENTE_API_URL: http://cliente-lv
+      VEICULO_API_URL: http://veiculo-lv
+      FUNCIONARIO_API_URL: http://funcionario-lv
+      ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8004:80"
     volumes:
@@ -103,7 +179,8 @@ services:
         aliases:
             - funcionario-lv
     depends_on:
-      - db
+      db-init:
+        condition: service_completed_successfully
 
   os-lv-api:
     build:
@@ -113,6 +190,20 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     working_dir: /var/www/html
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: os_db
+      DB_USERNAME: os_app
+      DB_PASSWORD: ${OS_DB_PASSWORD:-local-os-change-me}
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
+      OS_APPROVAL_SECRET: ${OS_APPROVAL_SECRET:-local-approval-secret-change-me}
+      MONOLITO_URL: ${MONOLITO_URL:-http://localhost:8080}
+      CLIENTE_API_URL: http://cliente-lv
+      VEICULO_API_URL: http://veiculo-lv
+      FUNCIONARIO_API_URL: http://funcionario-lv
+      ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8005:80"
     volumes:
@@ -122,7 +213,8 @@ services:
         aliases:
           - os-lv
     depends_on:
-      - db
+      db-init:
+        condition: service_completed_successfully
   mailhog:
     image: mailhog/mailhog:latest
     container_name: mws-mailhog

@@ -1,31 +1,33 @@
-#!/bin/bash
-echo "Aguardando o banco de dados inicializar completamente..."
-sleep 10
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Ajustando permissões de storage nos containers..."
-docker exec -u root funcionario-lv-api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-docker exec -u root funcionario-lv-api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+if [[ -f .env ]]; then
+  set -a
+  # Strip CR from Windows-edited .env files before Bash evaluates assignments.
+  source <(sed 's/\r$//' .env)
+  set +a
+fi
 
-docker exec -u root cliente-lv-api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-docker exec -u root cliente-lv-api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+services=(funcionario-lv-api cliente-lv-api veiculo-lv-api estoque-lv-api os-lv-api)
+for container in "${services[@]}"; do
+  docker exec -u root "$container" chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+  docker exec -u root "$container" chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+done
 
-docker exec -u root veiculo-lv-api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-docker exec -u root veiculo-lv-api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+echo "Applying service-owned migrations..."
+for container in "${services[@]}"; do
+  docker exec -u www-data "$container" php /var/www/html/artisan migrate --force
+done
 
-docker exec -u root estoque-lv-api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-docker exec -u root estoque-lv-api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+root_password="${LEGACY_DB_ROOT_PASSWORD:-root}"
+legacy_has_data=$(docker exec -e MYSQL_PWD="$root_password" mws-db mysql -N -uroot -e \
+  "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='mws_db' AND table_name='clientes';" 2>/dev/null || echo 0)
+if [[ "$legacy_has_data" == "1" ]]; then
+  echo "Migrating legacy mws_db data into isolated service schemas..."
+  ./migrate-service-data.sh
+else
+  echo "No legacy tables found; seeding the employee service."
+  docker exec -u www-data funcionario-lv-api php /var/www/html/artisan db:seed --force
+fi
 
-docker exec -u root os-lv-api chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-docker exec -u root os-lv-api chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-echo "Iniciando Migrations e Seeds dos Microserviços..."
-# Funcionário roda primeiro para garantir a estrutura de login e disparar o Seed
-docker exec -u www-data funcionario-lv-api php /var/www/html/artisan migrate --seed --force
-
-# Os demais rodam suas estruturas específicas sem colidir na tabela do Sanctum
-docker exec -u www-data cliente-lv-api php /var/www/html/artisan migrate --force
-docker exec -u www-data veiculo-lv-api php /var/www/html/artisan migrate --force
-docker exec -u www-data estoque-lv-api php /var/www/html/artisan migrate --force
-docker exec -u www-data os-lv-api php /var/www/html/artisan migrate --force
-
-echo "Ambiente configurado com sucesso!"
+echo "Service schemas are migrated."
