@@ -82,6 +82,12 @@ done
 
 Para testar apenas um serviço, use o mesmo comando substituindo `$service` pelo nome do container.
 
+O CI executa os testes dos cinco microsserviços com PHP 8.4 e PCOV, publica um
+relatório Clover por serviço e roda Pint e PHPStan nível 1 como verificações de
+qualidade. O cenário BDD do ciclo de OS está em
+`Microservicos-lv/php84/Os-lv/tests/Feature/ordem-servico.feature` e sua execução
+está em `OrdemServicoControllerTest`.
+
 ## Documentação e APIs
 A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo:
 [Estratégia de comunicação entre microsserviços](./docs/estrategia-comunicacao-microsservicos.md)

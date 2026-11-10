@@ -1,0 +1,20 @@
+-- Execute with an administrator on the existing MySQL/RDS instance before deploying.
+-- Replace every password with the matching value in mws-service-secrets.yaml.example.
+CREATE DATABASE IF NOT EXISTS cliente_db;
+CREATE DATABASE IF NOT EXISTS veiculo_db;
+CREATE DATABASE IF NOT EXISTS estoque_db;
+CREATE DATABASE IF NOT EXISTS funcionario_db;
+CREATE DATABASE IF NOT EXISTS os_db;
+
+CREATE USER IF NOT EXISTS 'cliente_app'@'%' IDENTIFIED BY 'REPLACE_CLIENTE_PASSWORD';
+CREATE USER IF NOT EXISTS 'veiculo_app'@'%' IDENTIFIED BY 'REPLACE_VEICULO_PASSWORD';
+CREATE USER IF NOT EXISTS 'estoque_app'@'%' IDENTIFIED BY 'REPLACE_ESTOQUE_PASSWORD';
+CREATE USER IF NOT EXISTS 'funcionario_app'@'%' IDENTIFIED BY 'REPLACE_FUNCIONARIO_PASSWORD';
+CREATE USER IF NOT EXISTS 'os_app'@'%' IDENTIFIED BY 'REPLACE_OS_PASSWORD';
+
+GRANT ALL PRIVILEGES ON cliente_db.* TO 'cliente_app'@'%';
+GRANT ALL PRIVILEGES ON veiculo_db.* TO 'veiculo_app'@'%';
+GRANT ALL PRIVILEGES ON estoque_db.* TO 'estoque_app'@'%';
+GRANT ALL PRIVILEGES ON funcionario_db.* TO 'funcionario_app'@'%';
+GRANT ALL PRIVILEGES ON os_db.* TO 'os_app'@'%';
+FLUSH PRIVILEGES;

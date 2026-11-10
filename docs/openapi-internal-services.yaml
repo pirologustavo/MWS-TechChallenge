@@ -1,0 +1,216 @@
+openapi: 3.0.3
+info:
+  title: Contratos REST internos MWS
+  version: 1.0.0
+  description: Endpoints serviço-a-serviço com token interno. IDs pertencem ao serviço indicado e não são chaves estrangeiras compartilhadas.
+paths:
+  /api/v1/stock-adjustments:
+    post:
+      summary: Ajustar estoque com chave idempotente
+      security: [{ BearerToken: [] }]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, maxLength: 120 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 200
+                  items:
+                    type: object
+                    required: [id, qtd]
+                    properties:
+                      id: { type: integer }
+                      qtd: { type: integer, description: Positivo consome; negativo estorna. }
+      responses:
+        '200': { description: Ajuste aplicado ou replay da mesma chave }
+        '409': { description: Saldo insuficiente ou chave reutilizada com outro payload }
+        '422': { description: Payload inválido }
+  /api/internal/v1/token:
+    get:
+      summary: Validar token Sanctum emitido pelo Funcionario-lv
+      description: Requer credencial interna e Authorization Bearer com o token do usuário.
+      security: [{ InternalToken: [], BearerToken: [] }]
+      responses:
+        '200':
+          description: Token válido ou inválido.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid]
+                properties:
+                  valid: { type: boolean }
+        '401': { description: Credencial interna inválida }
+  /api/internal/v1/stock-adjustments:
+    post:
+      summary: Ajustar estoque por solicitação autenticada de outro serviço
+      security: [{ InternalToken: [] }]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, maxLength: 120 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 200
+                  items:
+                    type: object
+                    required: [id, qtd]
+                    properties:
+                      id: { type: integer }
+                      qtd: { type: integer, description: Positivo consome; negativo estorna. }
+      responses:
+        '200': { description: Ajuste aplicado ou replay da mesma chave }
+        '409': { description: Saldo insuficiente ou chave reutilizada com outro payload }
+        '401': { description: Credencial interna inválida }
+  /api/internal/v1/clientes:
+    get:
+      summary: Consultar clientes por IDs ou CPF
+      security: [{ InternalToken: [] }]
+      parameters:
+        - name: ids[]
+          in: query
+          required: false
+          schema: { type: array, maxItems: 200, items: { type: integer } }
+        - name: cpf
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Clientes encontrados; lista vazia se IDs/CPF não existirem.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Cliente' } }
+        '401': { description: Token ausente ou inválido }
+        '422': { description: Consulta inválida }
+  /api/internal/v1/veiculos:
+    get:
+      summary: Consultar veículos por IDs
+      security: [{ InternalToken: [] }]
+      parameters:
+        - name: ids[]
+          in: query
+          required: true
+          schema: { type: array, maxItems: 200, items: { type: integer } }
+      responses:
+        '200':
+          description: Veículos encontrados.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Veiculo' } }
+        '401': { description: Token ausente ou inválido }
+        '422': { description: Consulta inválida }
+  /api/internal/v1/funcionarios:
+    get:
+      summary: Consultar mecânicos por IDs
+      security: [{ InternalToken: [] }]
+      parameters:
+        - name: ids[]
+          in: query
+          required: true
+          schema: { type: array, maxItems: 200, items: { type: integer } }
+      responses:
+        '200':
+          description: Mecânicos encontrados.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Funcionario' } }
+        '401': { description: Token ausente ou inválido }
+        '422': { description: Consulta inválida }
+  /api/internal/v1/itens-estoque:
+    get:
+      summary: Consultar itens de estoque por IDs
+      security: [{ InternalToken: [] }]
+      parameters:
+        - name: ids[]
+          in: query
+          required: true
+          schema: { type: array, maxItems: 200, items: { type: integer } }
+        - name: include_archived
+          in: query
+          required: false
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Itens encontrados; itens arquivados só são retornados quando solicitados.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/ItemEstoque' } }
+        '401': { description: Token ausente ou inválido }
+        '422': { description: Consulta inválida }
+  /api/os/publico/{id}:
+    get:
+      summary: Obter OS para aprovação por link assinado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: signature
+          in: query
+          required: true
+          description: HMAC SHA-256 do ID usando OS_APPROVAL_SECRET compartilhado com o Monólito.
+          schema: { type: string }
+      responses:
+        '200': { description: OS e itens com snapshots históricos }
+        '403': { description: Assinatura inválida }
+        '404': { description: OS não encontrada }
+components:
+  securitySchemes:
+    InternalToken:
+      type: apiKey
+      in: header
+      name: X-Internal-Token
+    BearerToken:
+      type: http
+      scheme: bearer
+  schemas:
+    Cliente:
+      type: object
+      properties:
+        clientid: { type: integer }
+        nome: { type: string }
+        email: { type: string, nullable: true }
+        telefone: { type: string, nullable: true }
+    Veiculo:
+      type: object
+      properties:
+        carid: { type: integer }
+        clientid: { type: integer }
+        modelo: { type: string }
+        placa: { type: string }
+    Funcionario:
+      type: object
+      properties:
+        funcid: { type: integer }
+        nome: { type: string }
+        cargo: { type: string, enum: [Mecânico] }
+    ItemEstoque:
+      type: object
+      properties:
+        estoqid: { type: integer }
+        descricao: { type: string }
+        tipo: { type: string, enum: [peca, servico] }
+        quantidade_atual: { type: integer, nullable: true }
+        valor_venda: { type: number, format: float }
+        ativo: { type: boolean }

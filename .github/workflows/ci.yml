@@ -22,20 +22,6 @@ jobs:
           - Funcionario-lv
           - Os-lv
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: testing
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
 
       - name: Checkout
@@ -46,8 +32,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_mysql
-          coverage: none
+          extensions: mbstring, pdo_sqlite
+          coverage: pcov
+          tools: phpstan
 
 
       - name: Install dependencies
@@ -55,25 +42,21 @@ jobs:
         run: composer install --prefer-dist --no-progress
 
 
-      - name: Configure environment
+      - name: Run tests and collect coverage
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
-        run: |
-          cp .env.example .env.testing
+        run: php artisan test --coverage-clover=coverage.xml
 
-           sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env.testing
-           sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env.testing
-           sed -i 's/DB_DATABASE=.*/DB_DATABASE=testing/' .env.testing
-           sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env.testing
-           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=root/' .env.testing
-
-          php artisan key:generate --env=testing
-
-
-      - name: Run migrations
+      - name: Check code style
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
-        run: php artisan migrate --force
+        run: vendor/bin/pint --test app tests
 
-
-      - name: Run tests
+      - name: Static analysis
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
-        run: php artisan test
+        run: phpstan analyse app --level=1 --no-progress --autoload-file=vendor/autoload.php
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: Microservicos-lv/php84/${{ matrix.service }}/coverage.xml
+          if-no-files-found: error
