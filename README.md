@@ -19,6 +19,35 @@ A solução foi decomposta em contêineres independentes para garantir alta coes
 - **Estoque-lv:** Controle de peças e insumos.
 - **Os-lv:** Core Domain - Gestão de Ordens de Serviço, transições de status e disparos de e-mail ao cliente.
 
+## Saga das ordens de serviço
+
+As operações distribuídas de OS e estoque usam uma Saga síncrona entre os
+serviços `Os-lv` e `Estoque-lv`. Cada serviço mantém transações somente no seu
+banco: `Os-lv` persiste o agregado da OS e envia um ajuste versionado para o
+endpoint interno de estoque; `Estoque-lv` valida e aplica o ajuste em uma
+transação local, protegido por `Idempotency-Key`. O correlation ID acompanha
+as chamadas e os logs de falha.
+
+Quando uma etapa posterior falha, o serviço que iniciou a mudança executa a
+ação compensatória inversa: falha ao baixar estoque remove OS, itens e histórico
+locais; falha ao salvar edição/análise devolve o ajuste aplicado; cancelamento
+ou exclusão devolve ao estoque as quantidades associadas à OS. Se a compensação
+também falhar, o erro é registrado em nível crítico para reconciliação manual.
+Isso é consistência eventual com compensação, não rollback ACID entre bancos.
+
+Para este fluxo, a decisão é evoluir para coreografia quando houver um broker:
+OS e Estoque são bounded contexts independentes, então cada serviço deve reagir
+a eventos de negócio e publicar o resultado de sua etapa, sem um coordenador
+central. Essa escolha reduz o acoplamento temporal e permite que os participantes
+evoluam separadamente; o custo é exigir consumidores idempotentes, outbox,
+observabilidade por correlation ID e reconciliação de Sagas paradas. O repositório
+ainda não configura broker ou outbox: o transporte implementado é REST síncrono,
+com `Os-lv` conduzindo a sequência e as compensações. Portanto, a implementação
+atual oferece rollback local e compensações entre serviços, mas ainda não é uma
+coreografia efetiva. Para concluir essa migração, é necessário provisionar a
+mensageria e substituir as chamadas de comando por eventos persistidos em outbox
+e consumidos independentemente pelos serviços.
+
 ## Como executar o projeto
 ### Opção 1: Ambiente Local (Docker Compose)
 Copie `docker-compose.env.example` para `.env`, substitua os segredos e mantenha `MYSQL_ROOT_PASSWORD` compatível com o volume MySQL existente. Depois execute na raiz: <br>
