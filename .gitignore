@@ -20,6 +20,7 @@ k8s/mws-secret.yaml
 k8s/secrets.yaml
 k8s/*-secret.yaml
 k8s/mws-configmap.yaml
+k8s/
 
 .idea/
 .vscode/
