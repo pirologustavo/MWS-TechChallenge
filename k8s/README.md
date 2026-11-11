@@ -346,3 +346,9 @@ Antes de aplicar os deployments:
 4. Aplique os deployments. Cada serviço usa seu schema e chama as demais APIs por seus Services Kubernetes (`http://cliente-lv`, `http://veiculo-lv`, `http://funcionario-lv`, `http://estoque-lv`).
 
 Faça backup dos dados legados e pare gravações durante o backfill.
+
+## Datadog (observabilidade)
+
+O passo a passo completo, incluindo contexto do cluster, criação segura do
+Secret, instalação Helm, rollout e dashboard está em
+[DATADOG.md](./DATADOG.md).

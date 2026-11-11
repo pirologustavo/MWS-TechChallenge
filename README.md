@@ -100,6 +100,33 @@ Workspace~e01e23b1-b0c9-4148-8bea-f931ea6d3628/collection/45952571-cfa04a96-
 Realizamos scans de segurança utilizando o composer audit
   - Status Atual: 0 vulnerabilidades críticas encontradas no código de produção
 
+## Observabilidade
+
+O projeto instrumenta o Monólito e as cinco APIs com Datadog APM, logs JSON em
+`stderr`, `X-Correlation-ID`, métricas DogStatsD e healthchecks. Para Kubernetes,
+há requests/limits e probes de readiness/liveness; o Agent coleta APM, logs e
+métricas de CPU/memória. Os recursos de dashboard e monitores ficam em
+`observability/`.
+
+No Docker Compose, copie `docker-compose.env.example` para `.env`, configure
+`DD_API_KEY` e suba o Agent opcional junto dos serviços:
+
+```bash
+DD_AGENT_HOST=datadog-agent docker compose --profile observability up -d --build
+```
+
+Preencha `DD_API_KEY`, `DD_APP_KEY` e `DD_SITE` no `.env` ignorado pelo Git. O
+provisionador lê essas variáveis do arquivo sem imprimi-las:
+
+```bash
+python3 observability/provision-datadog.py
+```
+
+Depois de provisionar os monitores, associe-os ao canal de notificação usado
+pela equipe (por exemplo, Slack ou PagerDuty) na conta Datadog.
+
+No Kubernetes, veja [o guia de observabilidade](./k8s/README.md#datadog-observabilidade).
+
 ## CI/CD
 
 O projeto possui pipeline automatizado utilizando GitHub Actions.
