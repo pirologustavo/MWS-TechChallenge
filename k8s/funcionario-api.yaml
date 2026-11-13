@@ -11,12 +11,35 @@ spec:
     metadata:
       labels:
         app: funcionario-lv
+        tags.datadoghq.com/service: funcionario-lv
+        tags.datadoghq.com/env: prod
     spec:
       containers:
         - name: funcionario-lv
           image: pirolo/funcionario-api:latest
           ports:
             - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: 80
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           envFrom:
             - configMapRef:
                 name: mws-config
@@ -24,6 +47,22 @@ spec:
             - secretRef:
                 name: mws-funcionario-service-secret
           env:
+            - name: LOG_CHANNEL
+              value: stderr
+            - name: DD_SERVICE
+              value: funcionario-lv
+            - name: DD_ENV
+              value: prod
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_TRACE_AGENT_PORT
+              value: "8126"
+            - name: DD_DOGSTATSD_PORT
+              value: "8125"
+            - name: DD_LOGS_INJECTION
+              value: "true"
             - name: DB_DATABASE
               value: funcionario_db
             - name: CLIENTE_API_URL

@@ -15,26 +15,24 @@ Cada serviço acessa somente os dados do seu domínio. Os joins cruzados e consu
 
 ## Responsabilidades e contratos
 
-| Consumidor | Dono consultado | Uso | Contrato necessário |
+| Produtor | Evento / rota | Consumidor | Efeito |
 |---|---|---|---|
-| `Os-lv` | Cliente | validar cliente, obter contato e nome | buscar por ID/CPF; resposta mínima com ID, nome, e-mail e estado |
-| `Os-lv` | Veículo | validar veículo e vínculo com cliente; obter placa/modelo | buscar por ID; resposta mínima com ID, `clientid`, placa e modelo |
-| `Os-lv` | Funcionário | validar mecânico | buscar funcionário por ID e confirmar que pode atuar como mecânico |
-| `Os-lv` | Estoque | validar itens e disponibilidade; futuramente reservar/baixar/restaurar quantidades | consulta em lote por IDs; comandos explícitos de reserva, consumo e estorno |
-| `Veiculo-lv` | Cliente | validar `clientid` no cadastro/alteração e enriquecer tela | buscar cliente por ID; listar veículos não deve depender de acesso ao banco de Cliente |
-| `Estoque-lv` | OS | preservar itens usados em histórico | sem consulta reversa à OS; itens são arquivados com `ativo=false`, permanecem consultáveis pela OS para histórico e deixam de aparecer em novas buscas |
+| `Os-lv` | `os.stock.adjustment.requested` | `Estoque-lv` | Reservar, consumir ou devolver saldo em transação local idempotente |
+| `Estoque-lv` | `stock.adjustment.succeeded` / `stock.adjustment.failed` | `Os-lv` | Concluir a Saga ou compensar o estado local da OS |
+| `Os-lv` | `os.status.changed`, `os.saga.#` | fila de integração / observabilidade | Propagar mudanças de ciclo de vida sem acoplar o serviço de OS |
 
-Contratos internos são versionados sob `/api/internal/v1`, documentados em OpenAPI e retornam DTOs estáveis. Ajuste de estoque usa `POST /api/v1/stock-adjustments` com `Idempotency-Key`. Consultas em lote aceitam até 200 IDs para evitar uma chamada por linha.
+As mensagens são JSON versionáveis com `event_id`, `event_type`, `saga_id`, `operation_id`, `osid`, `correlation_id` e `occurred_at`. REST continua sendo usado para validações e consultas pontuais; nenhuma mudança de estoque ligada ao fluxo de OS é feita por chamada REST síncrona. Cada serviço grava a mensagem em sua própria `integration_outbox` junto com a alteração de domínio e mantém `integration_inbox` para deduplicação. A publicação e os consumidores podem repetir mensagens sem repetir efeitos de negócio.
 
-## Fluxo recomendado para abrir OS
+## Saga coreografada de OS
 
-1. `Os-lv` valida a entrada localmente e consulta Cliente, Veículo e Funcionário por seus endpoints internos.
-2. Confirma que o veículo pertence ao cliente informado e que o funcionário está habilitado.
-3. Consulta Estoque em lote, confere IDs e disponibilidade, e registra snapshots de descrição e preço recebidos.
-4. Grava OS, itens, snapshots e histórico em uma transação somente do banco de `Os-lv`.
-5. `Os-lv` grava a OS e solicita a baixa de estoque pelo endpoint interno idempotente. Se a baixa falhar, remove a OS e seus itens locais como compensação. Estoque valida o saldo e aplica o ajuste em transação local.
+1. `Os-lv` valida referências por REST, persiste OS/itens no banco próprio e, na mesma transação, cria `saga_operations` e grava `os.stock.adjustment.requested` na outbox.
+2. O worker de OS publica a outbox no exchange durável `mws.saga`. O worker de Estoque recebe o evento, bloqueia e valida os itens na sua transação local, registra a chave de idempotência e grava um evento de resultado na outbox do Estoque.
+3. `Os-lv` consome o resultado. No sucesso, marca a Saga como concluída e libera transições do fluxo. Na rejeição, compensa a ação: criação vira cancelamento auditável; edição/análise/cancelamento restauram snapshot; exclusão só acontece após confirmação de devolução.
+4. Mensagens transitórias recebem até cinco tentativas com espera e dead-letter. Eventos inválidos vão diretamente para dead-letter. `GET /api/os/{id}/saga` consulta o estado. O monitor `mws.saga.stuck` sinaliza operações pendentes por mais de cinco minutos.
 
-Para listagens, retornar os dados locais primeiro e enriquecer em lote. Se um serviço de cadastro estiver indisponível, manter as informações históricas da OS; para campos atuais não disponíveis, sinalizar ausência parcial e registrar a falha. Não derrubar todo o fluxo de OS por falha de enriquecimento de tela.
+A coreografia foi escolhida porque OS e Estoque são donos de bancos separados e ambos participam com eventos explícitos. Não há coordenador central fazendo chamadas distribuídas: cada participante reage ao evento anterior e publica o próximo passo. A outbox evita perder a publicação após commit; a inbox e a operação idempotente evitam efeitos duplicados. O rollback é uma compensação de negócio, não uma transação ACID distribuída: em caso de falha não transitória, cada serviço preserva a consistência do próprio banco e publica o resultado para desfazer a etapa anterior.
+
+Para subir localmente, `docker compose up -d --build` inicia RabbitMQ, APIs, publishers e consumers. O painel local do broker fica em `http://localhost:15672`. No Kubernetes, aplique o Secret `mws-rabbitmq-secret`, `rabbitmq.yaml` e os Deployments `estoque-saga-worker.yaml` e `os-saga-worker.yaml` antes de atualizar as APIs. Os workers executam as migrations de seu serviço antes de consumir mensagens.
 
 ## Segurança e resiliência
 

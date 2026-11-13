@@ -64,6 +64,25 @@ services:
     entrypoint: ["bash", "/provision-service-databases.sh"]
     network_mode: "service:db"
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: mws-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-mws}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-mws-local-change-me}
+    ports:
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - mws-network
+
   cliente-lv-api:
     build:
       context: ./Microservicos-lv/php84/Cliente-lv
@@ -173,6 +192,11 @@ services:
       DB_DATABASE: estoque_db
       DB_USERNAME: estoque_app
       DB_PASSWORD: ${ESTOQUE_DB_PASSWORD:-local-estoque-change-me}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-mws}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-mws-local-change-me}
+      RABBITMQ_VHOST: /
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
@@ -189,6 +213,21 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
+
+  estoque-lv-saga-worker:
+    extends:
+      service: estoque-lv-api
+    container_name: estoque-lv-saga-worker
+    command: ["sh", "-c", "php artisan migrate --force && (php artisan saga:publish-outbox &) && exec php artisan saga:consume-stock-adjustments"]
+    ports: []
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
 
   funcionario-lv-api:
     build:
@@ -257,6 +296,11 @@ services:
       DB_DATABASE: os_db
       DB_USERNAME: os_app
       DB_PASSWORD: ${OS_DB_PASSWORD:-local-os-change-me}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-mws}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-mws-local-change-me}
+      RABBITMQ_VHOST: /
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
       OS_APPROVAL_SECRET: ${OS_APPROVAL_SECRET:-local-approval-secret-change-me}
       MONOLITO_URL: ${MONOLITO_URL:-http://localhost:8080}
@@ -275,6 +319,21 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
+
+  os-lv-saga-worker:
+    extends:
+      service: os-lv-api
+    container_name: os-lv-saga-worker
+    command: ["sh", "-c", "php artisan migrate --force && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; sleep 60; done &) && exec php artisan saga:consume-stock-results"]
+    ports: []
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
   mailhog:
     image: mailhog/mailhog:latest
     container_name: mws-mailhog
@@ -314,3 +373,4 @@ networks:
 
 volumes:
   mws_db_data:
+  rabbitmq_data:

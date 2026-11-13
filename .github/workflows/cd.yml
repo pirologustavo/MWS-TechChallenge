@@ -118,6 +118,9 @@ jobs:
           kubectl set image deployment/estoque-lv \
           estoque-lv=$ECR_REGISTRY/estoque-lv:${{ github.sha }}
 
+          kubectl set image deployment/estoque-lv-saga-worker \
+          estoque-lv-saga-worker=$ECR_REGISTRY/estoque-lv:${{ github.sha }}
+
 
       - name: Deploy Funcionario
         run: |
@@ -129,6 +132,9 @@ jobs:
         run: |
           kubectl set image deployment/os-lv \
           os-lv=$ECR_REGISTRY/os-lv:${{ github.sha }}
+
+          kubectl set image deployment/os-lv-saga-worker \
+          os-lv-saga-worker=$ECR_REGISTRY/os-lv:${{ github.sha }}
 
 
       - name: Deploy Monolito
@@ -142,6 +148,8 @@ jobs:
           kubectl rollout status deployment/cliente-lv
           kubectl rollout status deployment/veiculo-lv
           kubectl rollout status deployment/estoque-lv
+          kubectl rollout status deployment/estoque-lv-saga-worker
           kubectl rollout status deployment/funcionario-lv
           kubectl rollout status deployment/os-lv
+          kubectl rollout status deployment/os-lv-saga-worker
           kubectl rollout status deployment/monolito-deployment

@@ -21,32 +21,42 @@ A solução foi decomposta em contêineres independentes para garantir alta coes
 
 ## Saga das ordens de serviço
 
-As operações distribuídas de OS e estoque usam uma Saga síncrona entre os
-serviços `Os-lv` e `Estoque-lv`. Cada serviço mantém transações somente no seu
-banco: `Os-lv` persiste o agregado da OS e envia um ajuste versionado para o
-endpoint interno de estoque; `Estoque-lv` valida e aplica o ajuste em uma
-transação local, protegido por `Idempotency-Key`. O correlation ID acompanha
-as chamadas e os logs de falha.
+O fluxo OS/Estoque usa coreografia assíncrona via RabbitMQ, sem coordenador
+central. `Os-lv` grava a mudança local e o evento
+`OSStockAdjustmentRequested` na mesma transação SQL (transactional outbox). O
+publicador entrega o evento persistente ao exchange `mws.saga`; `Estoque-lv`
+consome a fila `estoque.stock-adjustments`, valida o saldo e aplica a alteração
+em uma transação no seu próprio banco. Em seguida grava o evento
+`stock.adjustment.succeeded` ou `stock.adjustment.failed` na própria outbox.
+`Os-lv` consome o resultado pela fila `os.stock-results` e conclui ou compensa
+a operação.
 
-Quando uma etapa posterior falha, o serviço que iniciou a mudança executa a
-ação compensatória inversa: falha ao baixar estoque remove OS, itens e histórico
-locais; falha ao salvar edição/análise devolve o ajuste aplicado; cancelamento
-ou exclusão devolve ao estoque as quantidades associadas à OS. Se a compensação
-também falhar, o erro é registrado em nível crítico para reconciliação manual.
-Isso é consistência eventual com compensação, não rollback ACID entre bancos.
+Os eventos carregam `saga_id`, `event_id`, `operation_id` e `correlation_id`.
+Cada serviço mantém uma inbox com unicidade por `event_id`; a operação de estoque
+também usa uma chave idempotente persistida em `stock_operations`. O publicador
+reenvia eventos pendentes; consumidores repetidos não repetem efeitos. Mensagens
+com falhas transitórias aguardam cinco segundos antes de até cinco tentativas e
+depois seguem para a fila `mws.saga.dead`.
 
-Para este fluxo, a decisão é evoluir para coreografia quando houver um broker:
-OS e Estoque são bounded contexts independentes, então cada serviço deve reagir
-a eventos de negócio e publicar o resultado de sua etapa, sem um coordenador
-central. Essa escolha reduz o acoplamento temporal e permite que os participantes
-evoluam separadamente; o custo é exigir consumidores idempotentes, outbox,
-observabilidade por correlation ID e reconciliação de Sagas paradas. O repositório
-ainda não configura broker ou outbox: o transporte implementado é REST síncrono,
-com `Os-lv` conduzindo a sequência e as compensações. Portanto, a implementação
-atual oferece rollback local e compensações entre serviços, mas ainda não é uma
-coreografia efetiva. Para concluir essa migração, é necessário provisionar a
-mensageria e substituir as chamadas de comando por eventos persistidos em outbox
-e consumidos independentemente pelos serviços.
+Se a reserva inicial falhar, a OS é marcada como cancelada e seus itens ficam
+preservados para auditoria. Se uma edição, análise, cancelamento, rejeição ou
+exclusão não conseguir concluir o ajuste de estoque, `Os-lv` restaura o snapshot
+local da operação. Uma exclusão só remove a OS depois da confirmação da devolução
+ao estoque. A API de criação responde com o recurso criado e `saga_status` igual
+a `PENDENTE`; consulte `GET /api/os/{id}/saga` até a conclusão ou compensação.
+Transições operacionais ficam bloqueadas enquanto a Saga estiver pendente.
+
+Essa escolha separa os bounded contexts e tolera indisponibilidade temporária do
+broker por meio das outboxes, com consistência eventual em vez de rollback ACID
+distribuído. As consultas de referência continuam síncronas via REST; alterações
+de saldo de estoque ligadas à OS trafegam por eventos.
+
+No Docker Compose, RabbitMQ e os dois workers são iniciados junto com a aplicação
+por `docker compose up -d --build`. O painel de administração local fica em
+`http://localhost:15672`; use `RABBITMQ_USER` e `RABBITMQ_PASSWORD` do `.env`.
+No Kubernetes, aplique primeiro o Secret `mws-rabbitmq-secret` criado a partir
+de `k8s/mws-rabbitmq-secret.yaml.example`, depois `k8s/rabbitmq.yaml` e os
+Deployments `k8s/estoque-saga-worker.yaml` e `k8s/os-saga-worker.yaml`.
 
 ## Como executar o projeto
 ### Opção 1: Ambiente Local (Docker Compose)

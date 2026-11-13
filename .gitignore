@@ -21,6 +21,11 @@ k8s/secrets.yaml
 k8s/*-secret.yaml
 k8s/mws-configmap.yaml
 k8s/
+!k8s/
+!k8s/rabbitmq.yaml
+!k8s/os-saga-worker.yaml
+!k8s/estoque-saga-worker.yaml
+!k8s/mws-rabbitmq-secret.yaml.example
 
 .idea/
 .vscode/

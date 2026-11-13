@@ -203,6 +203,29 @@ kubectl get nodes
 
 # Aplicação dos Manifests
 
+## Broker e workers da Saga de OS
+
+O fluxo assíncrono entre OS e Estoque depende do RabbitMQ e de um worker por
+serviço. Crie o Secret no namespace usado pela aplicação, com as mesmas
+credenciais que serão usadas pelo broker:
+
+```bash
+kubectl create secret generic mws-rabbitmq-secret -n default \
+  --from-literal=username=mws \
+  --from-literal=password='<senha-forte>'
+kubectl apply -f k8s/rabbitmq.yaml
+kubectl rollout status statefulset/rabbitmq -n default
+kubectl apply -f k8s/estoque-saga-worker.yaml -f k8s/os-saga-worker.yaml
+kubectl rollout status deployment/estoque-lv-saga-worker -n default
+kubectl rollout status deployment/os-lv-saga-worker -n default
+```
+
+O ConfigMap `mws-config` define host, porta e vhost; os workers leem usuário e
+senha do Secret. Antes de iniciá-los, crie os Secrets de banco e aplique o
+ConfigMap. Os workers executam as migrations locais, publicam a outbox e
+consomem eventos. As imagens devem estar publicadas em um registry acessível ao
+cluster. O workflow de CD atualiza também esses dois deployments.
+
 Aplicar todos os recursos Kubernetes:
 
 ```bash
