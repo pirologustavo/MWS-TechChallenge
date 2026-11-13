@@ -58,10 +58,24 @@ No Kubernetes, aplique primeiro o Secret `mws-rabbitmq-secret` criado a partir
 de `k8s/mws-rabbitmq-secret.yaml.example`, depois `k8s/rabbitmq.yaml` e os
 Deployments `k8s/estoque-saga-worker.yaml` e `k8s/os-saga-worker.yaml`.
 
+## Banco NoSQL do Cliente
+
+`Cliente-lv` mantém os dados cadastrais no MySQL isolado do serviço e usa o
+MongoDB para a coleção documental `cliente_audit_events`. Criação, alteração e
+exclusão geram eventos com os campos alterados, data, ID do cliente e correlação;
+valores pessoais não são copiados para o documento de auditoria. Consulte pelo
+endpoint autenticado `GET /api/clientes/{id}/auditoria`. Falhas temporárias do
+MongoDB são registradas sem desfazer a gravação já confirmada no MySQL.
+
+O Compose inicia um MongoDB persistente junto do Cliente. No Kubernetes, ajuste
+a senha em `k8s/mws-mongodb-secret.yaml.example` e use a mesma senha na URI
+`MONGODB_URI` do Secret do Cliente. O CI testa gravação e leitura em um MongoDB
+real.
+
 ## Como executar o projeto
 ### Opção 1: Ambiente Local (Docker Compose)
 Copie `docker-compose.env.example` para `.env`, substitua os segredos e mantenha `MYSQL_ROOT_PASSWORD` compatível com o volume MySQL existente. Depois execute na raiz: <br>
-`docker-compose up -d`
+`docker compose up -d --build`
   
 ### Configurar os Bancos de Dados e Seeders
 O setup cria os schemas isolados, executa as migrations e, quando há dados legados em `mws_db`, copia os dados preservando IDs e snapshots. Faça backup e pare gravações no banco legado antes do backfill; o script recusa destinos não vazios. Em ambiente novo, cria o usuário inicial. Execute: <br>
@@ -92,9 +106,10 @@ done
 
 Para testar apenas um serviço, use o mesmo comando substituindo `$service` pelo nome do container.
 
-O CI executa os testes dos cinco microsserviços com PHP 8.4 e PCOV, publica um
-relatório Clover por serviço e roda Pint e PHPStan nível 1 como verificações de
-qualidade. O cenário BDD do ciclo de OS está em
+O CI executa os testes dos cinco microsserviços com PHP 8.4 e PCOV e falha se
+qualquer serviço ficar abaixo de 80% de cobertura de statements. Cada serviço gera
+um relatório Clover; Pint verifica estilo e PHPStan nível 1 faz análise estática.
+O cenário BDD do ciclo de OS roda em uma etapa própria do pipeline e está em
 `Microservicos-lv/php84/Os-lv/tests/Feature/ordem-servico.feature` e sua execução
 está em `OrdemServicoControllerTest`.
 

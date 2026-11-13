@@ -83,6 +83,23 @@ services:
     networks:
       - mws-network
 
+  mongodb:
+    image: mongo:8.0
+    container_name: mws-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-local-mongo-change-me}
+    volumes:
+      - mongodb_cliente_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - mws-network
+
   cliente-lv-api:
     build:
       context: ./Microservicos-lv/php84/Cliente-lv
@@ -108,6 +125,9 @@ services:
       DB_DATABASE: cliente_db
       DB_USERNAME: cliente_app
       DB_PASSWORD: ${CLIENTE_DB_PASSWORD:-local-cliente-change-me}
+      MONGODB_URI: mongodb://${MONGODB_ROOT_USERNAME:-root}:${MONGODB_ROOT_PASSWORD:-local-mongo-change-me}@mongodb:27017/?authSource=admin
+      MONGODB_DATABASE: cliente_audit
+      MONGODB_TIMEOUT_MS: 2000
       INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-internal-token-change-me}
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
@@ -124,6 +144,8 @@ services:
     depends_on:
       db-init:
         condition: service_completed_successfully
+      mongodb:
+        condition: service_healthy
 
   veiculo-lv-api:
     build:
@@ -374,3 +396,4 @@ networks:
 volumes:
   mws_db_data:
   rabbitmq_data:
+  mongodb_cliente_data:

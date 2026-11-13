@@ -32,7 +32,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite
+          extensions: mbstring, pdo_sqlite, mongodb
           coverage: pcov
           tools: phpstan
 
@@ -46,11 +46,20 @@ jobs:
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
         run: php artisan test --coverage-clover=coverage.xml
 
+      - name: Enforce 80% coverage for this service
+        working-directory: Microservicos-lv/php84/${{ matrix.service }}
+        run: python3 ../../../scripts/check_coverage.py coverage.xml --minimum 80
+
+      - name: Run OS BDD scenario
+        if: matrix.service == 'Os-lv'
+        working-directory: Microservicos-lv/php84/Os-lv
+        run: vendor/bin/phpunit --group=bdd
+
       - name: Check code style
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
         run: vendor/bin/pint --test app tests
 
-      - name: Static analysis
+      - name: Code quality analysis (PHPStan)
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
         run: phpstan analyse app --level=1 --no-progress --autoload-file=vendor/autoload.php
 
@@ -60,3 +69,40 @@ jobs:
           name: coverage-${{ matrix.service }}
           path: Microservicos-lv/php84/${{ matrix.service }}/coverage.xml
           if-no-files-found: error
+
+  cliente-mongodb-integration:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:8.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: integration-test
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MONGODB_URI: mongodb://root:integration-test@127.0.0.1:27017/?authSource=admin
+      MONGODB_DATABASE: cliente_audit_test
+      MONGODB_TIMEOUT_MS: 5000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, mongodb
+
+      - name: Install Cliente dependencies
+        working-directory: Microservicos-lv/php84/Cliente-lv
+        run: composer install --prefer-dist --no-progress
+
+      - name: Verify MongoDB audit persistence
+        working-directory: Microservicos-lv/php84/Cliente-lv
+        run: vendor/bin/phpunit tests/Integration/ClienteAuditMongoTest.php

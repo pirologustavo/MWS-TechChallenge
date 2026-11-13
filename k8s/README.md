@@ -226,6 +226,24 @@ ConfigMap. Os workers executam as migrations locais, publicam a outbox e
 consomem eventos. As imagens devem estar publicadas em um registry acessível ao
 cluster. O workflow de CD atualiza também esses dois deployments.
 
+## MongoDB do Cliente
+
+`Cliente-lv` usa MySQL para cadastro e MongoDB para auditoria documental. Ajuste
+a senha em `k8s/mws-mongodb-secret.yaml.example` e use a mesma senha na URI
+`MONGODB_URI` do Secret `mws-cliente-service-secret` em
+`k8s/mws-service-secrets.yaml.example`. Aplique:
+
+```bash
+kubectl create secret generic mws-mongodb-secret -n default \
+  --from-literal=username=root \
+  --from-literal=password='<senha-configurada-na-uri>'
+kubectl apply -f k8s/mongodb.yaml
+kubectl rollout status statefulset/mongodb -n default
+```
+
+O StatefulSet persiste documentos em PVC. A URI de conexão MongoDB vai no
+Secret do Cliente; não a coloque no ConfigMap.
+
 Aplicar todos os recursos Kubernetes:
 
 ```bash

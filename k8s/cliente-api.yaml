@@ -14,6 +14,16 @@ spec:
         tags.datadoghq.com/service: cliente-lv
         tags.datadoghq.com/env: prod
     spec:
+      initContainers:
+        - name: wait-for-mongodb
+          image: mongo:8.0
+          envFrom:
+            - secretRef:
+                name: mws-cliente-service-secret
+          command:
+            - sh
+            - -c
+            - until mongosh "$MONGODB_URI" --quiet --eval 'db.runCommand({ ping: 1 }).ok'; do sleep 2; done
       containers:
         - name: cliente-lv
           image: pirolo/cliente-api:latest

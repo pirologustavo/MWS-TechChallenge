@@ -26,6 +26,8 @@ k8s/
 !k8s/os-saga-worker.yaml
 !k8s/estoque-saga-worker.yaml
 !k8s/mws-rabbitmq-secret.yaml.example
+!k8s/mongodb.yaml
+!k8s/mws-mongodb-secret.yaml.example
 
 .idea/
 .vscode/
