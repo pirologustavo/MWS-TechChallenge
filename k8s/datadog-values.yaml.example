@@ -1,0 +1,39 @@
+datadog:
+  apiKeyExistingSecret: datadog-secret
+  site: datadoghq.com
+  clusterName: docker-desktop
+  # Docker Desktop pode não expor metadados suficientes para o Agent detectar
+  # o hostname via kubelet/container runtime. Usa o nome do nó como fallback.
+  env:
+    - name: DD_HOSTNAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+  tags:
+    - env:prod
+    - project:mws
+  logs:
+    enabled: true
+    containerCollectAll: true
+  apm:
+    portEnabled: true
+    socketEnabled: false
+  dogstatsd:
+    port: 8125
+    useSocketVolume: false
+    useHostPort: true
+    nonLocalTraffic: true
+  processAgent:
+    enabled: true
+    processCollection: true
+  kubeStateMetricsCore:
+    enabled: true
+
+agents:
+  containers:
+    agent:
+      env:
+        - name: DD_LOGS_CONFIG_AUTO_MULTI_LINE_DETECTION
+          value: "true"
+  tolerations:
+    - operator: Exists

@@ -6,7 +6,7 @@ use App\OS\Application\OsServiceInterface;
 use App\OS\Infrastructure\AprovacaoRepository;
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 $id = $_GET['id'] ?? null;
 $tokenRecebido = $_GET['token'] ?? null;
@@ -18,8 +18,8 @@ if (!$id || !$tokenRecebido) {
     die("<h1>Erro 400: Requisição inválida.</h1>");
 }
 
-$salt = $_ENV['SECRET_KEY'] ?? null;
-$tokenValido = md5($id . $salt);
+$secret = $_ENV['OS_APPROVAL_SECRET'] ?? '';
+$tokenValido = hash_hmac('sha256', (string) $id, (string) $secret);
 
 if ($tokenRecebido !== $tokenValido) {
     http_response_code(403);

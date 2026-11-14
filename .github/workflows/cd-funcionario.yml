@@ -1,0 +1,19 @@
+name: CD - Funcionario-lv
+
+on:
+  workflow_run:
+    workflows: [Laravel CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    uses: ./.github/workflows/cd-service.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      context: ./Microservicos-lv/php84/Funcionario-lv
+      repository: funcionario-lv
+      deployment_containers: '{"funcionario-lv":"funcionario-lv"}'
+      watch_paths: '["Microservicos-lv/php84/Funcionario-lv","k8s/funcionario-api.yaml"]'
+    secrets: inherit

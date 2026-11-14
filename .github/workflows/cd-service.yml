@@ -1,0 +1,109 @@
+name: Reusable service CD
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit SHA that passed CI
+        required: true
+        type: string
+      context:
+        description: Docker build context
+        required: true
+        type: string
+      repository:
+        description: ECR repository name
+        required: true
+        type: string
+      deployment_containers:
+        description: JSON map of Kubernetes deployments to container names
+        required: true
+        type: string
+      watch_paths:
+        description: JSON array of paths that belong to this service
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+      AWS_REGION:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ inputs.repository }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout CI-approved commit and history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Check whether this service changed
+        id: changes
+        env:
+          CI_APPROVED_REF: ${{ inputs.ref }}
+          WATCH_PATHS: ${{ inputs.watch_paths }}
+        run: |
+          base="$(git rev-parse "$CI_APPROVED_REF^" 2>/dev/null || true)"
+          mapfile -t paths < <(jq -r '.[]' <<< "$WATCH_PATHS")
+          if [[ -z "$base" ]] || ! git diff --quiet "$base" "$CI_APPROVED_REF" -- "${paths[@]}"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure AWS credentials
+        if: steps.changes.outputs.changed == 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: steps.changes.outputs.changed == 'true'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push service image
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.repository }}
+          IMAGE_TAG: ${{ inputs.ref }}
+          BUILD_CONTEXT: ${{ inputs.context }}
+        run: |
+          docker build --tag "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" "$BUILD_CONTEXT"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Configure Kubernetes access
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: aws eks update-kubeconfig --name mws-cluster --region "$AWS_REGION"
+
+      - name: Deploy service and wait for rollout
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.repository }}
+          IMAGE_TAG: ${{ inputs.ref }}
+          DEPLOYMENT_CONTAINERS: ${{ inputs.deployment_containers }}
+        run: |
+          image="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          while IFS='=' read -r deployment container; do
+            kubectl set image "deployment/$deployment" "$container=$image" --namespace default
+            kubectl rollout status "deployment/$deployment" --namespace default --timeout=10m
+          done < <(jq -r 'to_entries[] | "\(.key)=\(.value)"' <<< "$DEPLOYMENT_CONTAINERS")

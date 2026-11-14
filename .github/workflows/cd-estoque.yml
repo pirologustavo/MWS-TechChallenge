@@ -1,0 +1,19 @@
+name: CD - Estoque-lv
+
+on:
+  workflow_run:
+    workflows: [Laravel CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    uses: ./.github/workflows/cd-service.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      context: ./Microservicos-lv/php84/Estoque-lv
+      repository: estoque-lv
+      deployment_containers: '{"estoque-lv":"estoque-lv","estoque-lv-saga-worker":"estoque-lv-saga-worker"}'
+      watch_paths: '["Microservicos-lv/php84/Estoque-lv","k8s/estoque-api.yaml","k8s/estoque-saga-worker.yaml"]'
+    secrets: inherit

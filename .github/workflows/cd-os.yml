@@ -1,0 +1,19 @@
+name: CD - Os-lv
+
+on:
+  workflow_run:
+    workflows: [Laravel CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    uses: ./.github/workflows/cd-service.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      context: ./Microservicos-lv/php84/Os-lv
+      repository: os-lv
+      deployment_containers: '{"os-lv":"os-lv","os-lv-saga-worker":"os-lv-saga-worker"}'
+      watch_paths: '["Microservicos-lv/php84/Os-lv","k8s/os-api.yaml","k8s/os-saga-worker.yaml"]'
+    secrets: inherit

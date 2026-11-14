@@ -6,8 +6,7 @@ use App\Models\Veiculo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-use Laravel\Sanctum\Sanctum;
-use App\Models\Funcionario;
+use Illuminate\Support\Facades\Http;
 
 class VeiculoControllerTest extends TestCase
 {
@@ -19,14 +18,16 @@ class VeiculoControllerTest extends TestCase
         DB::statement('CREATE TABLE clientes (clientid INTEGER PRIMARY KEY, nome TEXT)');
         DB::table('clientes')->insert(['clientid' => 1, 'nome' => 'Gustavo Pirolo']);
 
-        $funcionario = Funcionario::create([
-            'nome' => 'Administrador',
-            'cargo' => 'Gerente',
-            'usr' => 'admin',
-            'password' => bcrypt('123')
-        ]);
-
-        Sanctum::actingAs($funcionario);
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), '/api/internal/v1/token')) {
+                return Http::response(['valid' => true], 200);
+            }
+            if (str_contains($request->url(), '/api/internal/v1/clientes')) {
+                return Http::response([['clientid' => 1, 'nome' => 'Gustavo Pirolo']], 200);
+            }
+            return Http::response([], 200);
+        });
+        $this->withToken('test-user-token');
     }
 
     /** @test */

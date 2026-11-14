@@ -154,22 +154,13 @@ No Kubernetes, veja [o guia de observabilidade](./k8s/README.md#datadog-observab
 
 ## CI/CD
 
-O projeto possui pipeline automatizado utilizando GitHub Actions.
-
-Fluxo:
-
-1. Pull Request / Push na branch main
-2. Execução dos testes automatizados
-3. Build das imagens Docker
-4. Publicação no Amazon ECR
-5. Deploy automático no Amazon EKS via kubectl set image
-
-Tecnologias:
-
-- GitHub Actions
-- Docker
-- Amazon ECR
-- Amazon EKS
+O CI roda testes, BDD, cobertura e qualidade. Os workflows independentes
+`cd-cliente.yml`, `cd-veiculo.yml`, `cd-estoque.yml`, `cd-funcionario.yml`,
+`cd-os.yml` e `cd-monolito.yml` são disparados quando `Laravel CI` termina com
+sucesso na branch `main`. Cada workflow recebe o SHA exato aprovado, constrói e
+publica somente a imagem do seu serviço no Amazon ECR, atualiza seus deployments
+no EKS e aguarda o rollout. O fluxo comum está em `cd-service.yml`; não há mais
+um workflow agregado nem um segundo workflow de deploy do Monólito.
 
 ## Autor
   - Gustavo Pirolo - Cientista da Computação & Trainee Software Development

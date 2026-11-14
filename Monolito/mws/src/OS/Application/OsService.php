@@ -2,7 +2,6 @@
 
 namespace App\OS\Application;
 
-use App\Estoque\Infrastructure\EstoqueRepository;
 use App\OS\Infrastructure\OsRepository;
 use Exception;
 
@@ -45,13 +44,8 @@ class OsService implements OsServiceInterface
     public function salvar($os)
     {
         $dadosValidados = self::validarOs($os);
-        (new OsRepository())->salvar($dadosValidados);
-
-        $dadosValidados['itens'] = array_map(function($item) {
-            return is_string($item) ? json_decode($item, true) : $item;
-        }, $dadosValidados['itens']);
-
-        (new EstoqueRepository())->alterarEstoque($dadosValidados['itens']);
+        $ordemCriada = (new OsRepository())->salvar($dadosValidados);
+        return $ordemCriada;
     }
 
     public function listarTodos()
@@ -102,49 +96,7 @@ class OsService implements OsServiceInterface
      */
     public function analiseOs($id, $os)
     {
-        $osParaComparar = $this->osRepository->buscarPorId($id);
-        $itensAntigos = [];
-
-        if (isset($osParaComparar->itens) && is_array($osParaComparar->itens)) {
-            foreach ($osParaComparar->itens as $item) {
-                $itensAntigos[$item->id] = (float)$item->qtd;
-            }
-        }
-
-        $this->osRepository->analiseOs($id, $os);
-
-        $itensNovos = array_map(function($i) {
-            return is_string($i) ? json_decode($i, true) : $i;
-        }, $os['itens'] ?? []);
-
-        $diffEstoque = [];
-
-        foreach ($itensNovos as $novo) {
-            $idItem = $novo['id'];
-            $qtdNova = (float)$novo['qtd'];
-            $qtdAntiga = $itensAntigos[$idItem] ?? 0;
-
-            $diferenca = $qtdNova - $qtdAntiga;
-
-            if ($diferenca != 0) {
-                $diffEstoque[] = [
-                    'id' => $idItem,
-                    'qtd' => $diferenca
-                ];
-            }
-            unset($itensAntigos[$idItem]);
-        }
-
-        foreach ($itensAntigos as $idRemovido => $qtdRemovida) {
-            $diffEstoque[] = [
-                'id' => $idRemovido,
-                'qtd' => -$qtdRemovida
-            ];
-        }
-
-        if (!empty($diffEstoque)) {
-            (new \App\Estoque\Infrastructure\EstoqueRepository())->alterarEstoque($diffEstoque);
-        }
+        return $this->osRepository->analiseOs($id, $os);
     }
 
     /**

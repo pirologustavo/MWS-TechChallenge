@@ -1,0 +1,19 @@
+name: CD - Cliente-lv
+
+on:
+  workflow_run:
+    workflows: [Laravel CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    uses: ./.github/workflows/cd-service.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      context: ./Microservicos-lv/php84/Cliente-lv
+      repository: cliente-lv
+      deployment_containers: '{"cliente-lv":"cliente-lv"}'
+      watch_paths: '["Microservicos-lv/php84/Cliente-lv","k8s/cliente-api.yaml","k8s/mongodb.yaml"]'
+    secrets: inherit

@@ -14,7 +14,8 @@ class OrdemServicoItem extends Model
         'estoqid',
         'quantidade',
         'valor_unitario',
-        'subtotal'
+        'subtotal',
+        'descricao_snapshot'
     ];
 
     public function ordemServico()

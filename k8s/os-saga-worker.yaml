@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: os-lv-saga-worker
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: os-lv-saga-worker
+  template:
+    metadata:
+      labels:
+        app: os-lv-saga-worker
+        tags.datadoghq.com/service: os-lv
+        tags.datadoghq.com/env: prod
+    spec:
+      containers:
+        - name: os-lv-saga-worker
+          image: pirolo/os-api:latest
+          imagePullPolicy: Always
+          workingDir: /var/www/html
+          command:
+            - sh
+            - -c
+            - php artisan migrate --force && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; sleep 60; done &) && exec php artisan saga:consume-stock-results
+          envFrom:
+            - configMapRef:
+                name: mws-config
+            - secretRef:
+                name: mws-os-service-secret
+          env:
+            - name: DB_DATABASE
+              value: os_db
+            - name: DD_SERVICE
+              value: os-lv
+            - name: DD_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: DD_DOGSTATSD_PORT
+              value: "8125"
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mws-rabbitmq-secret
+                  key: username
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mws-rabbitmq-secret
+                  key: password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

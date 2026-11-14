@@ -3,17 +3,20 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OrdemServicoController;
+use App\Http\Middleware\SharedServiceTokenAuth;
 
 Route::get('/ping', function () {
     return response()->json(['ping' => true]);
 });
+Route::get('/os/publico/{id}', [OrdemServicoController::class, 'publicoAssinado']);
 
 Route::post('/os/aprovarOsUsuario/{id}', [OrdemServicoController::class, 'aprovarOsUsuario']);
 Route::post('/os/reprovarOsUsuario/{id}', [OrdemServicoController::class, 'reprovarOsUsuario']);
 Route::get("/os/cliente/os/{cpf}", [OrdemServicoController::class, 'verificarOsCliente']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(SharedServiceTokenAuth::class)->group(function () {
     Route::post('/os/salvar', [OrdemServicoController::class, 'store']);
+    Route::get('/os/{id}/saga', [OrdemServicoController::class, 'estadoSaga']);
     Route::get('/os/listar', [OrdemServicoController::class, 'listar']);
     Route::get('/os/buscarPorId/{id}', [OrdemServicoController::class, 'buscarPorId']);
     Route::match(['PUT', 'POST'], '/os/atualizarOs/{id}', [OrdemServicoController::class, 'atualizarOs']);

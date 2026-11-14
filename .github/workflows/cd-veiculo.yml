@@ -1,0 +1,19 @@
+name: CD - Veiculo-lv
+
+on:
+  workflow_run:
+    workflows: [Laravel CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    uses: ./.github/workflows/cd-service.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      context: ./Microservicos-lv/php84/Veiculo-lv
+      repository: veiculo-lv
+      deployment_containers: '{"veiculo-lv":"veiculo-lv"}'
+      watch_paths: '["Microservicos-lv/php84/Veiculo-lv","k8s/veiculo-api.yaml"]'
+    secrets: inherit

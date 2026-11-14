@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('os_itens', function (Blueprint $table) {
-            $table->id('itemid');
+            $table->id('id');
             $table->foreignId('osid')->constrained('os', 'osid')->onDelete('cascade');
             $table->integer('estoqid');
             $table->integer('quantidade');

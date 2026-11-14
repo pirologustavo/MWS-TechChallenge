@@ -1,0 +1,18 @@
+{
+  "title": "MWS - Ordens de Serviço e APIs",
+  "description": "Latência, falhas de integração, consumo Kubernetes e tempos do fluxo de OS.",
+  "layout_type": "ordered",
+  "widgets": [
+    {"definition":{"type":"timeseries","title":"OS abertas por dia","requests":[{"q":"sum:mws.os.created{service:os-lv}.as_count().rollup(sum, 86400)","display_type":"bars","style":{"palette":"dog_classic"}}],"yaxis":{"include_zero":true,"scale":"linear","min":0,"max":"auto"},"time":{"live_span":"7d"}}},
+    {"definition":{"type":"timeseries","title":"Duração média por status (segundos)","requests":[{"q":"avg:mws.os.status.duration{service:os-lv,status:diagnostico}","display_type":"line","style":{"palette":"dog_classic","line_type":"solid","line_width":"normal"},"metadata":[{"expression":"avg:mws.os.status.duration{service:os-lv,status:diagnostico}","alias_name":"Diagnóstico"}]},{"q":"avg:mws.os.status.duration{service:os-lv,status:execucao}","display_type":"line","style":{"palette":"warm","line_type":"solid","line_width":"normal"},"metadata":[{"expression":"avg:mws.os.status.duration{service:os-lv,status:execucao}","alias_name":"Execução"}]},{"q":"avg:mws.os.status.duration{service:os-lv,status:finalizacao}","display_type":"line","style":{"palette":"cool","line_type":"solid","line_width":"normal"},"metadata":[{"expression":"avg:mws.os.status.duration{service:os-lv,status:finalizacao}","alias_name":"Finalização"}]}],"time":{"live_span":"7d"}}},
+    {"definition":{"type":"timeseries","title":"Latência das APIs (ms)","requests":[{"q":"avg:mws.api.request.duration{*} by {service}","display_type":"line","style":{"palette":"dog_classic","line_type":"solid","line_width":"normal"}}],"time":{"live_span":"4h"}}},
+    {"definition":{"type":"timeseries","title":"Falhas em processamento de OS","requests":[{"q":"sum:mws.os.processing.failures{service:os-lv}.as_count()","display_type":"bars","style":{"palette":"warm","line_type":"solid","line_width":"normal"}}],"time":{"live_span":"4h"}}},
+    {"definition":{"type":"timeseries","title":"Erros de integrações","requests":[{"q":"sum:mws.integration.errors{*} by {dependency}.as_count()","display_type":"bars","style":{"palette":"warm","line_type":"solid","line_width":"normal"}}],"time":{"live_span":"4h"}}},
+    {"definition":{"type":"timeseries","title":"CPU por deployment","requests":[{"q":"sum:kubernetes.cpu.usage.total{*} by {kube_deployment}","display_type":"line","style":{"palette":"dog_classic","line_type":"solid","line_width":"normal"}}],"time":{"live_span":"4h"}}},
+    {"definition":{"type":"timeseries","title":"Memória por deployment","requests":[{"q":"sum:kubernetes.memory.usage{*} by {kube_deployment}","display_type":"line","style":{"palette":"cool","line_type":"solid","line_width":"normal"}}],"time":{"live_span":"4h"}}}
+  ],
+  "template_variables": [],
+  "notify_list": [],
+  "reflow_type": "fixed",
+  "is_read_only": false
+}

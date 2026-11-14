@@ -5,7 +5,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 use App\Seguranca\Application\SegurancaService;
 use App\Seguranca\Application\SegurancaServiceInterface;
 
-$dotenv->load();
+$dotenv->safeLoad();
 $mensagem = "";
 
 $usuario = $_POST['user'] ?? null;

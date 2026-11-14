@@ -3,40 +3,60 @@
 namespace App\OS\Infrastructure;
 
 use App\OS\Domain\AprovacaoRepositoryInterface;
-use App\Shared\Infrastructure\DataBase;
+use App\OS\Domain\OsRepositoryInterface;
+use App\Shared\Infrastructure\BaseRepository;
+use Exception;
 
-class AprovacaoRepository implements AprovacaoRepositoryInterface
+class AprovacaoRepository extends BaseRepository implements AprovacaoRepositoryInterface
 {
-    private DataBase $db;
+    private ?array $dados = null;
+    private ?string $osId = null;
 
     public function __construct()
     {
-        $this->db = new DataBase();
+        $this->baseUri = OsRepositoryInterface::URI;
     }
 
     public function buscarPorId($id)
     {
-        $sql = "SELECT * FROM os WHERE osid = :id";
-
-        return $this->db->fetchOne($sql, ["id" => $id]);
+        $this->carregar($id);
+        return (object) ($this->dados['os'] ?? []);
     }
 
     public function buscarItensPorOsId($id)
     {
-        $sql = "SELECT 
-                    veiculos.modelo, 
-                    os.sintomas, 
-                    os.analise, 
-                    estoque.descricao, 
-                    estoque.valor_custo, 
-                    os_itens.quantidade,
-                    os_itens.valor_unitario
-                FROM os_itens
-                JOIN estoque ON os_itens.estoqid = estoque.estoqid
-                INNER JOIN os ON os_itens.osid = os.osid
-                JOIN veiculos ON os.carid = veiculos.carid
-                WHERE os_itens.osid = :id";
+        $this->carregar($id);
+        $os = $this->dados['os'] ?? [];
 
-        return $this->db->fetchAll($sql, ["id" => $id]) ?? [];
+        return array_map(static fn (array $item) => [
+            'modelo' => $os['modelo'] ?? '',
+            'sintomas' => $os['sintomas'] ?? '',
+            'analise' => $os['analise'] ?? '',
+            'descricao' => $item['descricao'] ?? 'Item removido do estoque',
+            'quantidade' => $item['qtd'] ?? 0,
+            'valor_unitario' => $item['preco'] ?? 0,
+        ], $this->dados['itens'] ?? []);
+    }
+
+    private function carregar($id): void
+    {
+        if ($this->osId === (string) $id && $this->dados !== null) return;
+
+        $secret = (string) ($_ENV['OS_APPROVAL_SECRET'] ?? '');
+        if ($secret === '') throw new Exception('Chave de aprovação não configurada.');
+        $signature = hash_hmac('sha256', (string) $id, $secret);
+
+        try {
+            $response = $this->httpClient()->get("/api/os/publico/{$id}", [
+                'query' => ['signature' => $signature],
+                'headers' => ['Accept' => 'application/json'],
+            ]);
+            $dados = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            if (empty($dados['os'])) throw new Exception('Ordem de Serviço não encontrada.');
+            $this->osId = (string) $id;
+            $this->dados = $dados;
+        } catch (\Throwable $exception) {
+            throw new Exception('Não foi possível consultar a Ordem de Serviço: ' . $exception->getMessage(), 0, $exception);
+        }
     }
 }

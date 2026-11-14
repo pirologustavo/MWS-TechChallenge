@@ -64,6 +64,15 @@ return [
             ]) : [],
         ],
 
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGODB_URI', 'mongodb://mongodb:27017'),
+            'database' => env('MONGODB_DATABASE', 'cliente_audit'),
+            'options' => [
+                'serverSelectionTimeoutMS' => (int) env('MONGODB_TIMEOUT_MS', 2000),
+            ],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

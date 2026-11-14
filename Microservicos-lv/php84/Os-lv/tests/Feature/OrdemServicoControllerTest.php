@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\OrdemServico;
+use App\Saga\StockAdjustmentResultHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
-use Laravel\Sanctum\Sanctum;
-use App\Models\Funcionario;
 
 class OrdemServicoControllerTest extends TestCase
 {
@@ -17,86 +19,28 @@ class OrdemServicoControllerTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware();
-
-        DB::statement('DROP TABLE IF EXISTS os_itens');
-        DB::statement('DROP TABLE IF EXISTS os');
-
-        DB::statement('CREATE TABLE clientes (
-        clientid INTEGER PRIMARY KEY,
-        nome TEXT
-        )');
-
-        DB::statement('CREATE TABLE veiculos (
-        carid INTEGER PRIMARY KEY,
-        modelo TEXT,
-        placa TEXT
-        )');
-
-        DB::statement('CREATE TABLE estoque (
-        estoqid INTEGER PRIMARY KEY,
-        descricao TEXT
-        )');
-
-        DB::statement('CREATE TABLE os (
-        osid INTEGER PRIMARY KEY AUTOINCREMENT,
-        clientid INTEGER,
-        carid INTEGER,
-        funcid INTEGER,
-        sintomas TEXT,
-        analise TEXT,
-        status_atual TEXT,
-        statid_atual INTEGER,
-        valor_total DECIMAL(10,2),
-        entregue INTEGER DEFAULT 0,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-        )');
-
-        DB::statement('CREATE TABLE os_itens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        osid INTEGER,
-        estoqid INTEGER,
-        quantidade INTEGER,
-        valor_unitario DECIMAL(10,2),
-        subtotal DECIMAL(10,2),
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-        )');
-
-
-        DB::table('clientes')->insert([
-            'clientid' => 1,
-            'nome' => 'Gustavo Pirolo'
-        ]);
-
-        DB::table('veiculos')->insert([
-            'carid' => 1,
-            'modelo' => 'Golf GTI',
-            'placa' => 'ABC-1234'
-        ]);
-
-        DB::table('funcionarios')->insert([
-            'funcid' => 1,
-            'nome' => 'Mecânico Claudio',
-            'cargo' => 'Mecânico',
-            'usr' => 'claudio',
-            'password' => bcrypt('123')
-        ]);
-
-        DB::table('estoque')->insert([
-            'estoqid' => 1,
-            'descricao' => 'Amortecedor'
-        ]);
-
-
-        $funcionario = Funcionario::create([
-            'nome' => 'Administrador',
-            'cargo' => 'Gerente',
-            'usr' => 'admin',
-            'password' => bcrypt('123')
-        ]);
-
-        Sanctum::actingAs($funcionario);
+        config(['services.internal' => [
+            'cliente' => 'http://cliente.test',
+            'veiculo' => 'http://veiculo.test',
+            'funcionario' => 'http://funcionario.test',
+            'estoque' => 'http://estoque.test',
+        ]]);
+        Http::fake(function ($request) {
+            $url = $request->url();
+            if (str_contains($url, '/api/internal/v1/clientes')) {
+                return Http::response([['clientid' => 1, 'nome' => 'Gustavo Pirolo', 'email' => 'gustavo@example.test']], 200);
+            }
+            if (str_contains($url, '/api/internal/v1/veiculos')) {
+                return Http::response([['carid' => 1, 'clientid' => 1, 'modelo' => 'Golf GTI', 'placa' => 'ABC-1234']], 200);
+            }
+            if (str_contains($url, '/api/internal/v1/funcionarios')) {
+                return Http::response([['funcid' => 1, 'nome' => 'Mecânico Claudio', 'cargo' => 'Mecânico']], 200);
+            }
+            if (str_contains($url, '/api/internal/v1/itens-estoque')) {
+                return Http::response([['estoqid' => 1, 'descricao' => 'Amortecedor', 'tipo' => 'peca', 'quantidade_atual' => 10, 'valor_venda' => 250, 'ativo' => true]], 200);
+            }
+            return Http::response(['message' => 'Estoque ajustado com sucesso.'], 200);
+        });
     }
 
     /** @test */
@@ -122,12 +66,74 @@ class OrdemServicoControllerTest extends TestCase
         $this->assertDatabaseHas('os_itens', ['osid' => $response['osid'], 'estoqid' => 1]);
     }
 
+    /**
+     * BDD: Given valid references and available stock, when the workshop
+     * completes the OS lifecycle, then every state transition is persisted.
+     */
+    #[Group('bdd')]
+    public function test_bdd_fluxo_completo_da_os_da_abertura_a_entrega(): void
+    {
+        Mail::fake();
+
+        // Given: client, vehicle, mechanic and stock are available (faked by setUp).
+        // When: open the service order.
+        $opened = $this->postJson('/api/os/salvar', [
+            'clientid' => 1,
+            'carid' => 1,
+            'funcid' => 1,
+            'sintomas' => 'Ruído na suspensão',
+            'itens' => [['id' => 1, 'qtd' => 1]],
+        ]);
+        $opened->assertCreated();
+        $osid = $opened->json('osid');
+        $this->completePendingSaga($osid);
+
+        // And: diagnose the vehicle and submit an estimate for customer approval.
+        $this->postJson("/api/os/emDiagnostico/{$osid}")->assertOk();
+        $this->postJson("/api/os/analiseOs/{$osid}", [
+            'analise' => 'Troca do amortecedor',
+            'itens' => [['id' => 1, 'qtd' => 1, 'preco' => 250]],
+        ])->assertOk();
+
+        // And: customer approves; the workshop finishes and delivers the OS.
+        $this->postJson("/api/os/aprovarOsUsuario/{$osid}")->assertOk();
+        $this->postJson("/api/os/finalizarOs/{$osid}")->assertOk();
+        $this->postJson("/api/os/entregar/{$osid}")->assertOk();
+
+        // Then: final state and item history are retained.
+        $this->assertDatabaseHas('os', [
+            'osid' => $osid,
+            'status_atual' => 'Entregue',
+            'statid_atual' => 6,
+            'entregue' => 1,
+        ]);
+        $this->assertDatabaseHas('os_itens', ['osid' => $osid, 'estoqid' => 1, 'quantidade' => 1]);
+    }
+
+    private function completePendingSaga(int $osid): void
+    {
+        $operation = DB::table('saga_operations')->where('osid', $osid)->where('state', 'PENDING')->latest()->first();
+        $this->assertNotNull($operation, 'A abertura da OS deve iniciar uma Saga pendente.');
+
+        app(StockAdjustmentResultHandler::class)->handle([
+            'event_id' => (string) \Illuminate\Support\Str::uuid(),
+            'event_type' => 'stock.adjustment.succeeded',
+            'saga_id' => $operation->id,
+            'operation_id' => $operation->id,
+            'osid' => $osid,
+            'request_event_id' => $operation->request_event_id,
+            'items' => [['id' => 1, 'qtd' => -1]],
+        ]);
+    }
+
     /** @test */
-    public function test_deve_listar_ordens_de_servico_com_joins()
+    public function test_deve_listar_ordens_de_servico_com_dados_historicos()
     {
         $os = OrdemServico::create([
             'clientid' => 1, 'carid' => 1, 'funcid' => 1,
-            'status_atual' => 'Recebida', 'statid_atual' => 1, 'valor_total' => 100
+            'status_atual' => 'Recebida', 'statid_atual' => 1, 'valor_total' => 100,
+            'cliente_nome_snapshot' => 'Gustavo Pirolo',
+            'veiculo_modelo_snapshot' => 'Golf GTI',
         ]);
 
         $response = $this->getJson('/api/os/listar');
@@ -162,7 +168,7 @@ class OrdemServicoControllerTest extends TestCase
         ]);
 
         DB::table('os_itens')->insert([
-            'osid' => $os->osid, 'estoqid' => 1, 'quantidade' => 1, 'valor_unitario' => 10
+            'osid' => $os->osid, 'estoqid' => 1, 'quantidade' => 1, 'valor_unitario' => 10, 'subtotal' => 10
         ]);
 
         $response = $this->postJson("/api/os/deletarOs/{$os->osid}");

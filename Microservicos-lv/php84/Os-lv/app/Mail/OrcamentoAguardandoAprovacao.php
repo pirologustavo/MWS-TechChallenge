@@ -7,7 +7,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\URL;
 
 class OrcamentoAguardandoAprovacao extends Mailable
 {
@@ -32,8 +31,7 @@ class OrcamentoAguardandoAprovacao extends Mailable
 
     public function content(): Content
     {
-        $salt = env("SECRET_KEY");
-        $token = md5($this->os->osid . $salt);
+        $token = hash_hmac('sha256', (string) $this->os->osid, (string) config('services.os_approval_secret'));
 
         $urlMonolito = env('MONOLITO_URL') . "/os/aprovacao.php?id={$this->os->osid}&token={$token}";
 

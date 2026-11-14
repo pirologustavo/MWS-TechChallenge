@@ -1,0 +1,122 @@
+[
+  {
+    "name": "MWS: falhas no processamento de OS",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:mws.os.processing.failures{service:os-lv}.as_count() > 0",
+    "message": "Falha observada no fluxo de OS. Investigue os logs com service:os-lv e correlation_id. Configure o destino de notificação deste monitor no Datadog.",
+    "tags": [
+      "service:os-lv",
+      "team:mws"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0
+      },
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  },
+  {
+    "name": "MWS: falhas nas integrações entre serviços",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:mws.integration.errors{*}.as_count() > 3",
+    "message": "Aumentaram as falhas de integração. Use os logs JSON e correlation_id para localizar a requisição. Configure o destino de notificação deste monitor no Datadog.",
+    "tags": [
+      "team:mws",
+      "type:integration"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 3
+      },
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  },
+  {
+    "name": "MWS: deployment sem réplicas disponíveis",
+    "type": "query alert",
+    "query": "min(last_5m):min:kubernetes_state.deployment.replicas_available{kube_deployment:*-lv} by {kube_deployment} < 1",
+    "message": "Deployment sem réplica disponível. Verifique os probes e eventos do Kubernetes. Configure o destino de notificação deste monitor no Datadog.",
+    "tags": [
+      "team:mws",
+      "type:availability"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 1
+      },
+      "notify_no_data": true,
+      "no_data_timeframe": 10,
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  },
+  {
+    "name": "MWS: Saga de OS travada",
+    "type": "query alert",
+    "query": "max(last_5m):max:mws.saga.stuck{service:os-lv} > 0",
+    "message": "Há Sagas de OS pendentes há mais de cinco minutos. Consulte os logs críticos do serviço os-lv usando saga_id e correlation_id; verifique também as filas RabbitMQ.",
+    "tags": [
+      "service:os-lv",
+      "team:mws",
+      "type:saga"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0
+      },
+      "notify_no_data": false,
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  },
+  {
+    "name": "MWS: evento de Saga enviado para dead-letter",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:mws.saga.dead_letter{*}.as_count() > 0",
+    "message": "Evento Saga excedeu as tentativas ou tinha formato inválido. Inspecione a fila RabbitMQ mws.saga.dead e os logs por event_id/correlation_id.",
+    "tags": [
+      "team:mws",
+      "type:saga"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0
+      },
+      "notify_no_data": false,
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  },
+  {
+    "name": "MWS: falhas de publicação da outbox Saga",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:mws.saga.outbox.failures{*}.as_count() > 3",
+    "message": "A outbox não conseguiu publicar eventos no RabbitMQ. Verifique conectividade do broker e os logs do worker.",
+    "tags": [
+      "team:mws",
+      "type:saga"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 3
+      },
+      "notify_no_data": false,
+      "notify_audit": false,
+      "require_full_window": false,
+      "renotify_interval": 30,
+      "include_tags": true
+    }
+  }
+]

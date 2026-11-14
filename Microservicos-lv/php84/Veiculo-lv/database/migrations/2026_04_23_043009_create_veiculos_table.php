@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('ano');
 
             $table->unsignedBigInteger('clientid');
-            $table->foreign('clientid')->references('clientid')->on('clientes')->onDelete('cascade');
+            // References Cliente-lv over REST; no cross-service foreign key.
 
             $table->timestamps();
         });

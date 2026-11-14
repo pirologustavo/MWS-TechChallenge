@@ -5,3 +5,4 @@ vendor/
 **/db_data_api/
 **/*.tmp
 **/#innodb_redo/
+k8s/

@@ -4,13 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
+use App\Services\ClienteAuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClienteController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, ClienteAuditTrail $auditTrail)
     {
         // Validação
         $validator = Validator::make($request->all(), [
@@ -29,6 +31,7 @@ class ClienteController extends Controller
         }
 
         $cliente = Cliente::create($request->all());
+        $auditTrail->record((int) $cliente->clientid, 'created', array_keys($cliente->getAttributes()), $request->attributes->get('correlation_id') ?? $request->header('X-Correlation-ID'));
 
         return response()->json([
             'message' => 'Cliente cadastrado com sucesso no Microserviço!',
@@ -63,7 +66,7 @@ class ClienteController extends Controller
         return response()->json($cliente);
     }
 
-    public function atualizarCliente(Request $request, string $id)
+    public function atualizarCliente(Request $request, string $id, ClienteAuditTrail $auditTrail)
     {
         $cliente = Cliente::where('clientid', $id)->first();
 
@@ -77,7 +80,12 @@ class ClienteController extends Controller
             $dados['cpf'] = preg_replace("/\D/", "", $dados['cpf']);
         }
 
-        $cliente->update($dados);
+        $cliente->fill($dados);
+        $changedFields = array_keys($cliente->getDirty());
+        $cliente->save();
+        if ($changedFields) {
+            $auditTrail->record((int) $cliente->clientid, 'updated', $changedFields, $request->attributes->get('correlation_id') ?? $request->header('X-Correlation-ID'));
+        }
 
         return response()->json([
             'message' => 'Cliente atualizado com sucesso!',
@@ -85,18 +93,41 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function deletarCliente(string $id)
+    public function deletarCliente(string $id, ClienteAuditTrail $auditTrail, Request $request)
     {
-        return DB::transaction(function () use ($id) {
+        $cliente = DB::transaction(function () use ($id) {
             $cliente = Cliente::where('clientid', $id)->first();
 
             if (!$cliente) {
-                return response()->json(['message' => 'Cliente não encontrado'], 404);
+                return null;
             }
 
             $cliente->delete();
 
-            return response()->json(['message' => "Cliente id $id foi deletado com sucesso!"]);
+            return $cliente;
         });
+
+        if (!$cliente) return response()->json(['message' => 'Cliente não encontrado'], 404);
+
+        $auditTrail->record((int) $cliente->clientid, 'deleted', ['deleted'], $request->attributes->get('correlation_id') ?? $request->header('X-Correlation-ID'));
+
+        return response()->json(['message' => "Cliente id $id foi deletado com sucesso!"]);
+    }
+
+    public function auditoria(string $id, ClienteAuditTrail $auditTrail)
+    {
+        if (!ctype_digit($id) || (int) $id < 1) {
+            return response()->json(['message' => 'ID de cliente inválido.'], 422);
+        }
+
+        try {
+            return response()->json($auditTrail->history((int) $id));
+        } catch (\Throwable $exception) {
+            Log::warning('Falha ao consultar auditoria do cliente no MongoDB', [
+                'client_id' => (int) $id,
+                'exception' => $exception::class,
+            ]);
+            return response()->json(['message' => 'Histórico de auditoria indisponível.'], 503);
+        }
     }
 }

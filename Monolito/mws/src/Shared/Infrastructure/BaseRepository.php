@@ -15,10 +15,13 @@ abstract class BaseRepository
 
     protected function getHeaders(): array
     {
-        return [
+        $headers = [
             'Authorization' => 'Bearer ' . $this->getToken(),
             'Accept'        => 'application/json',
         ];
+        $correlationId = $_SERVER['MWS_CORRELATION_ID'] ?? $_SERVER['HTTP_X_CORRELATION_ID'] ?? '';
+        if ($correlationId !== '') $headers['X-Correlation-ID'] = $correlationId;
+        return $headers;
     }
 
     protected function httpClient(float $timeout = 5.0): Client
