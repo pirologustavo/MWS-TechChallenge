@@ -2,6 +2,12 @@ datadog:
   apiKeyExistingSecret: datadog-secret
   site: datadoghq.com
   clusterName: docker-desktop
+  # Certificado do Kubelet local pode não corresponder ao IP anunciado pelo nó.
+  # Uso restrito ao Docker Desktop; não desabilitar verificação TLS em produção.
+  kubelet:
+    tlsVerify: "false"
+    # Requer Agent 7.65+. Consulta a lista de pods pelo API Server.
+    useApiServer: true
   # Docker Desktop pode não expor metadados suficientes para o Agent detectar
   # o hostname via kubelet/container runtime. Usa o nome do nó como fallback.
   env:

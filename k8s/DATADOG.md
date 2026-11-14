@@ -1,7 +1,9 @@
 # Configurar Datadog no Kubernetes
 
-Este guia instala o Agent no cluster EKS e envia APM, logs, métricas DogStatsD
-e métricas de CPU/memória. Use Bash/WSL nos comandos abaixo.
+Este guia instala o Agent em Kubernetes e envia APM, logs e métricas DogStatsD.
+Use Bash/WSL nos comandos abaixo. O arquivo de valores versionado está
+preparado para desenvolvimento com Docker Desktop; em EKS, ajuste o nome do
+cluster e a configuração do Kubelet conforme a seção abaixo.
 
 ## 1. Prepare as chaves
 
@@ -62,10 +64,41 @@ houver Agent no cluster.
 O values file habilita APM na porta 8126, DogStatsD na 8125/UDP, coleta de logs,
 processos e estado do Kubernetes:
 
-No Docker Desktop, o kubelet/runtime pode não permitir a autodetecção do
-hostname. Por isso o values file define `DD_HOSTNAME` com o nome do nó via
-Downward API (`spec.nodeName`), evitando que o Agent encerre com erro de
-hostname.
+### Docker Desktop e acesso ao Kubelet
+
+No Docker Desktop, os nós Kubernetes e o Kubelet rodam dentro da VM Linux do
+Docker Desktop. O endereço anunciado em `status.hostIP` pode não ser roteável
+do pod do Agent até o Kubelet. Isso causa mensagens como `impossible to reach
+Kubelet with HTTP` e deixa checks `kubelet`/`orchestrator_pod` em erro, mesmo
+quando o pod do Agent está `Running` e a API key é válida. O log recebido para
+este projeto apresentou essa condição.
+
+O values file aplica duas configurações locais. `datadog.kubelet.tlsVerify:
+false` permite a conexão HTTPS quando o certificado do Kubelet local é
+autossinado ou não contém o IP anunciado pelo nó. Essa é a causa mais comum
+documentada para falha de handshake TLS do Agent, e os logs deste projeto
+também sugerem conferir essa opção. O chart oficial recomenda o mesmo ajuste
+para clusters locais como kind/minikube. **Essa opção desativa a validação do
+certificado e deve ficar restrita ao Docker Desktop de desenvolvimento; não a
+use em EKS/produção.**
+
+`datadog.kubelet.useApiServer: true` faz o Agent consultar a lista de pods pelo
+API Server em vez do endpoint de listagem do Kubelet. Requer Agent 7.65 ou
+superior. Isso ajuda na descoberta, mas **não redireciona todas as chamadas do
+Kubelet**: a documentação do chart limita essa opção à lista de pods. Se o
+Agent continuar reportando falha no check `kubelet` ou em endpoints de
+estatísticas após o rollout, o problema restante é conectividade/endpoint do
+Kubelet dentro da VM Docker Desktop; o fallback do API Server não fornece essas
+estatísticas.
+
+O arquivo também define `DD_HOSTNAME` com `spec.nodeName`, para evitar o erro
+separado de autodetecção do hostname observado anteriormente. Essa configuração
+de hostname não corrige conectividade com o Kubelet.
+
+Para EKS ou outro cluster em que o Agent alcança diretamente o IP do nó e seu
+Kubelet, remova `datadog.kubelet.tlsVerify: false` (o padrão é `true`) e use
+`datadog.kubelet.useApiServer: false` (padrão do chart), salvo se quiser a
+consulta de lista de pods pelo API Server.
 
 ```bash
 helm repo add datadog https://helm.datadoghq.com
@@ -73,7 +106,8 @@ helm repo update
 helm upgrade --install datadog-agent datadog/datadog \
   --namespace default \
   --values k8s/datadog-values.yaml.example \
-  --wait
+  --wait \
+  --timeout 10m
 ```
 
 As opções seguem o [guia oficial de instalação do Agent com Helm](https://docs.datadoghq.com/containers/kubernetes/installation/).
@@ -88,8 +122,32 @@ kubectl get pods --all-namespaces -l app.kubernetes.io/component=agent
 Para validar a saúde do Agent, escolha um pod retornado pelo comando acima:
 
 ```bash
-kubectl exec -n <NAMESPACE> <AGENT_POD> -- agent status
+kubectl exec -n <NAMESPACE> <AGENT_POD> -c agent -- agent status
 ```
+
+No Docker Desktop, confirme também que a opção chegou ao pod e verifique os
+checks Kubelet no status:
+
+```bash
+kubectl get daemonset datadog-agent -n default \
+  -o jsonpath='{.spec.template.spec.containers[?(@.name=="agent")].env[?(@.name=="DD_KUBELET_USE_API_SERVER")].value}{"\n"}'
+kubectl get daemonset datadog-agent -n default \
+  -o jsonpath='{.spec.template.spec.containers[?(@.name=="agent")].env[?(@.name=="DD_KUBELET_TLS_VERIFY")].value}{"\n"}'
+POD="$(kubectl get pods -n default -l app.kubernetes.io/component=agent \
+  -o jsonpath='{.items[0].metadata.name}')"
+kubectl exec -n default "$POD" -c agent -- agent status
+```
+
+O primeiro comando deve imprimir `true`. Confirme também no DaemonSet que
+`DD_KUBELET_TLS_VERIFY` está como `false`. `agent status` mostra se o check
+`kubelet` ficou saudável. Se continuar em erro, diferencie falha de TLS de
+falha de rota/endpoint consultando os logs do container `agent`; TLS desativado
+não corrige endereço ou porta inacessíveis. Em Docker Desktop, trate métricas
+de CPU/memória do host e dos
+containers como telemetria do runtime/host local; para telemetria Kubernetes
+completa do Kubelet, valide em um cluster em que o Agent tenha conectividade
+com os endpoints do nó (por exemplo, EKS). Isso é uma limitação do ambiente
+local, não uma falha de autenticação Datadog.
 
 ## 5. Reinicie as aplicações instrumentadas
 
