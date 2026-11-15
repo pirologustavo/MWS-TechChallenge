@@ -15,5 +15,5 @@ jobs:
       context: ./Microservicos-lv/php84/Veiculo-lv
       repository: veiculo-lv
       deployment_containers: '{"veiculo-lv":"veiculo-lv"}'
-      watch_paths: '["Microservicos-lv/php84/Veiculo-lv","k8s/veiculo-api.yaml"]'
+      watch_paths: '["k8s/veiculo-api.yaml"]'
     secrets: inherit

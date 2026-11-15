@@ -15,5 +15,5 @@ jobs:
       context: ./Microservicos-lv/php84/Os-lv
       repository: os-lv
       deployment_containers: '{"os-lv":"os-lv","os-lv-saga-worker":"os-lv-saga-worker"}'
-      watch_paths: '["Microservicos-lv/php84/Os-lv","k8s/os-api.yaml","k8s/os-saga-worker.yaml"]'
+      watch_paths: '["k8s/os-api.yaml","k8s/os-saga-worker.yaml"]'
     secrets: inherit

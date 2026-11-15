@@ -32,7 +32,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, mongodb
+          extensions: mbstring, pdo_sqlite, mongodb, sockets
           coverage: pcov
           tools: phpstan
 
@@ -61,7 +61,7 @@ jobs:
 
       - name: Code quality analysis (PHPStan)
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
-        run: phpstan analyse app --level=1 --no-progress --autoload-file=vendor/autoload.php
+        run: phpstan analyse app --level=1 --memory-limit=512M --no-progress --autoload-file=vendor/autoload.php
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -97,7 +97,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, mongodb
+          extensions: mbstring, pdo_sqlite, mongodb, sockets
 
       - name: Install Cliente dependencies
         working-directory: Microservicos-lv/php84/Cliente-lv

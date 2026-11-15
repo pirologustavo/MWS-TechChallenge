@@ -165,3 +165,24 @@ um workflow agregado nem um segundo workflow de deploy do Monólito.
 ## Autor
   - Gustavo Pirolo - Cientista da Computação & Trainee Software Development
   - Apelido do Servidor: Gustavo Pirolo - RM371637 
+
+## Revisão do documento completo (2026-11-14)
+
+A arquitetura permanece com cinco APIs: Cliente, Veículo, Funcionário, Estoque e OS.
+Execução, diagnóstico, orçamento e pagamento pertencem à API OS; não há API Execucao-lv.
+Os limites de serviço sugeridos no enunciado são exemplos, e o mínimo de três APIs é atendido.
+
+A integração inicial Mercado Pago está em Os-lv: criação de Checkout Pro, verificação
+autenticada consultando o provedor e estorno idempotente. A entrega exige pagamento
+confirmado. Configure MERCADOPAGO_ACCESS_TOKEN no ambiente da OS e aplique a migration
+2026_11_14_000001_create_billing_checkouts. Em Kubernetes use o Secret da OS.
+
+[Contrato de pagamentos](Microservicos-lv/php84/Os-lv/docs/payments.postman_collection.json).
+[Pendências e evidências da revisão](docs/fase4-verificacao.md).
+
+Os workflows ci.yml/cd.yml estão na raiz de cada repositório de serviço. O CD aguarda
+sucesso do CI e aplica os manifests locais com a imagem do SHA aprovado.
+
+## Auditoria dos requisitos da Fase 4
+
+[Mapa de requisitos e limites de validação](docs/fase4-requisitos.md). [Resultados locais atualizados](docs/fase4-verificacao.md).

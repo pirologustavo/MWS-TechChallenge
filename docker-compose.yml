@@ -132,6 +132,8 @@ services:
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
       FUNCIONARIO_API_URL: http://funcionario-lv
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8001:80"
@@ -176,6 +178,8 @@ services:
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
       FUNCIONARIO_API_URL: http://funcionario-lv
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8002:80"
@@ -223,6 +227,8 @@ services:
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
       FUNCIONARIO_API_URL: http://funcionario-lv
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8003:80"
@@ -240,8 +246,8 @@ services:
     extends:
       service: estoque-lv-api
     container_name: estoque-lv-saga-worker
-    command: ["sh", "-c", "php artisan migrate --force && (php artisan saga:publish-outbox &) && exec php artisan saga:consume-stock-adjustments"]
-    ports: []
+    command: ["sh", "-c", "php artisan migrate --force && (php artisan queue:work database --sleep=3 --tries=10 --timeout=45 &) && (php artisan saga:publish-outbox &) && exec php artisan saga:consume-stock-adjustments"]
+    ports: !reset []
     restart: unless-stopped
     healthcheck:
       disable: true
@@ -280,6 +286,8 @@ services:
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
       FUNCIONARIO_API_URL: http://funcionario-lv
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8004:80"
@@ -329,6 +337,8 @@ services:
       CLIENTE_API_URL: http://cliente-lv
       VEICULO_API_URL: http://veiculo-lv
       FUNCIONARIO_API_URL: http://funcionario-lv
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
       ESTOQUE_API_URL: http://estoque-lv
     ports:
       - "8005:80"
@@ -346,8 +356,8 @@ services:
     extends:
       service: os-lv-api
     container_name: os-lv-saga-worker
-    command: ["sh", "-c", "php artisan migrate --force && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; sleep 60; done &) && exec php artisan saga:consume-stock-results"]
-    ports: []
+    command: ["sh", "-c", "php artisan migrate --force && (php artisan queue:work database --sleep=3 --tries=10 --timeout=45 &) && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; php artisan billing:reconcile; sleep 60; done &) && exec php artisan saga:consume-stock-results"]
+    ports: !reset []
     restart: unless-stopped
     healthcheck:
       disable: true

@@ -15,5 +15,5 @@ jobs:
       context: ./Microservicos-lv/php84/Funcionario-lv
       repository: funcionario-lv
       deployment_containers: '{"funcionario-lv":"funcionario-lv"}'
-      watch_paths: '["Microservicos-lv/php84/Funcionario-lv","k8s/funcionario-api.yaml"]'
+      watch_paths: '["k8s/funcionario-api.yaml"]'
     secrets: inherit

@@ -118,5 +118,21 @@
       "renotify_interval": 30,
       "include_tags": true
     }
+  },
+  {
+    "name": "MWS: falhas de reconciliação Mercado Pago",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:mws.billing.reconciliation.failures{service:os-lv}.as_count() > 0",
+    "message": "Verificar billing_checkouts.last_error e logs por checkout_id. A reconciliação tenta novamente automaticamente; não criar outra cobrança enquanto o resultado estiver incerto.",
+    "tags": [
+      "service:os-lv",
+      "team:mws"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0
+      },
+      "require_full_window": false
+    }
   }
 ]

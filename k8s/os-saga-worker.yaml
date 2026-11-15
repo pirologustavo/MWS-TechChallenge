@@ -23,7 +23,7 @@ spec:
           command:
             - sh
             - -c
-            - php artisan migrate --force && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; sleep 60; done &) && exec php artisan saga:consume-stock-results
+            - php artisan migrate --force && (php artisan queue:work database --sleep=3 --tries=10 --timeout=45 &) && (php artisan saga:publish-outbox &) && (while true; do php artisan saga:report-stuck --minutes=5; php artisan billing:reconcile; sleep 60; done &) && exec php artisan saga:consume-stock-results
           envFrom:
             - configMapRef:
                 name: mws-config
