@@ -250,7 +250,8 @@ services:
     ports: !reset []
     restart: unless-stopped
     healthcheck:
-      disable: true
+      # Workers não executam Apache; desativa o probe HTTP herdado da API.
+      test: ["NONE"]
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -360,7 +361,8 @@ services:
     ports: !reset []
     restart: unless-stopped
     healthcheck:
-      disable: true
+      # Workers não executam Apache; desativa o probe HTTP herdado da API.
+      test: ["NONE"]
     depends_on:
       db-init:
         condition: service_completed_successfully
