@@ -91,7 +91,7 @@ No Docker Desktop, instale as dependências do bootstrap e aplique o ambiente lo
 
 ```bash
 python3 -m pip install -r scripts/requirements.txt
-python3 scripts/bootstrap-kubernetes.py --context docker-desktop
+python3 scripts/bootstrap-kubernetes.py --context docker-desktop --seed-development
 ```
 
 O script reutiliza os Secrets existentes, cria os ausentes e provisiona cinco databases/usuários no MySQL local. As imagens locais devem existir (`docker compose build`); acompanhe os rollouts com `kubectl get pods`.

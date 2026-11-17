@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--context', default='docker-desktop')
 parser.add_argument('--image-prefix', default='mwssandbox')
 parser.add_argument('--tag', default='latest')
+parser.add_argument('--seed-development', action='store_true', help='Cria usuários locais somente se a tabela de funcionários estiver vazia.')
 args = parser.parse_args()
 if args.context != 'docker-desktop':
     sys.exit('Este bootstrap usa o MySQL local. Para EKS, provisione databases no RDS e os Secrets antes do CD.')
@@ -98,4 +99,8 @@ for file, service in [('os-saga-worker.yaml','os'),('estoque-saga-worker.yaml','
                 container['image']=f'{args.image_prefix}-{service}-lv-api:{args.tag}' if service!='monolito' else f'{args.image_prefix}-monolito:{args.tag}'
                 container['imagePullPolicy']='IfNotPresent'
         apply(resource)
+if args.seed_development:
+    kubectl('rollout', 'status', 'deployment/funcionario-lv', '--timeout=120s')
+    seed = '''require "vendor/autoload.php"; $app=require "bootstrap/app.php"; $app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap(); if (App\\Models\\Funcionario::count()===0) {Illuminate\\Support\\Facades\\Artisan::call("db:seed", ["--force"=>true]); echo "Usuários locais iniciais criados.\\n";} else {echo "Usuários existentes preservados.\\n";}'''
+    kubectl('exec', 'deployment/funcionario-lv', '--', 'php', '-r', seed)
 print('Recursos aplicados. Acompanhe: kubectl get pods; kubectl rollout status deployment/os-lv', flush=True)
