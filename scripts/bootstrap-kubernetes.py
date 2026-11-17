@@ -36,7 +36,7 @@ def apply(resource):
 
 
 def secret(name, defaults):
-    result = subprocess.run(['kubectl', '--context', args.context, 'get', 'secret', name, '-o', 'json'], capture_output=True, text=True)
+    result = subprocess.run(['kubectl', '--context', args.context, '--namespace', 'default', 'get', 'secret', name, '-o', 'json'], capture_output=True, text=True)
     if result.returncode == 0:
         current = json.loads(result.stdout)
         defaults.update({key: base64.b64decode(value).decode() for key, value in current.get('data', {}).items()})

@@ -31,6 +31,30 @@ spec:
         - &id002
           name: DB_DATABASE
           value: cliente_db
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: DB_USERNAME
+          value: null
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: DB_PASSWORD
+          value: null
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: APP_KEY
+          value: null
+        - name: INTERNAL_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: INTERNAL_API_TOKEN
+          value: null
       containers:
       - name: cliente-lv
         image: pirolo/cliente-api:latest
@@ -69,6 +93,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+          value: null
         - name: DD_TRACE_AGENT_PORT
           value: '8126'
         - name: DD_DOGSTATSD_PORT
@@ -84,6 +109,30 @@ spec:
           value: http://funcionario-lv
         - name: ESTOQUE_API_URL
           value: http://estoque-lv
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: DB_USERNAME
+          value: null
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: DB_PASSWORD
+          value: null
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: APP_KEY
+          value: null
+        - name: INTERNAL_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mws-cliente-service-secret
+              key: INTERNAL_API_TOKEN
+          value: null
 ---
 apiVersion: v1
 kind: Service

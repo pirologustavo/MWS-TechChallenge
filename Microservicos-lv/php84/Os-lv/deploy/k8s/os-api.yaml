@@ -56,6 +56,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.hostIP
+          value: null
         - name: DD_TRACE_AGENT_PORT
           value: '8126'
         - name: DD_DOGSTATSD_PORT
@@ -81,6 +82,30 @@ spec:
           value: http://localhost:8080
         - name: TRUSTED_PROXIES
           value: '*'
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: DB_USERNAME
+          value: null
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: DB_PASSWORD
+          value: null
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: APP_KEY
+          value: null
+        - name: INTERNAL_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: INTERNAL_API_TOKEN
+          value: null
       initContainers:
       - name: migrate
         image: pirolo/os-api:latest
@@ -92,6 +117,30 @@ spec:
         envFrom: *id001
         env:
         - *id002
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: DB_USERNAME
+          value: null
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: DB_PASSWORD
+          value: null
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: APP_KEY
+          value: null
+        - name: INTERNAL_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mws-os-service-secret
+              key: INTERNAL_API_TOKEN
+          value: null
 ---
 apiVersion: v1
 kind: Service

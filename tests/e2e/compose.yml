@@ -46,6 +46,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+    user: 0:0
   mongodb:
     image: mongo:8.0
     healthcheck:

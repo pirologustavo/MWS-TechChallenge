@@ -87,8 +87,16 @@ O setup cria os schemas isolados, executa as migrations e, quando há dados lega
 `./setup.sh` <br>
 
 ### Opção 2: Ambiente Clusterizado (Kubernetes)
-Para deploy no cluster Kubernetes (Minikube ou EKS), provisione primeiro um schema e usuário por serviço no MySQL/RDS, preencha e aplique `k8s/mws-service-secrets.yaml.example` com segredos reais e ajuste o `DB_HOST` em `k8s/mws-configmap.yaml`. Faça backup e backfill dos dados antes de liberar tráfego. Depois aplique os manifests da pasta k8s/ <br>
-`python3 scripts/bootstrap-kubernetes.py` <br>
+No Docker Desktop, instale as dependências do bootstrap e aplique o ambiente local:
+
+```bash
+python3 -m pip install -r scripts/requirements.txt
+python3 scripts/bootstrap-kubernetes.py --context docker-desktop
+```
+
+O script reutiliza os Secrets existentes, cria os ausentes e provisiona cinco databases/usuários no MySQL local. As imagens locais devem existir (`docker compose build`); acompanhe os rollouts com `kubectl get pods`.
+
+No EKS, provisione os databases e usuários no RDS e aplique `k8s/mws-service-secrets.yaml.example` com valores reais, mais os Secrets do RabbitMQ e MongoDB. Ajuste `DB_HOST` no ConfigMap antes de aplicar os manifests. O bootstrap de desenvolvimento não altera o EKS. O CD de cada API aplica seus manifests e executa migrations antes de liberar a nova versão.
 
 Para acessar o painel de interceptação de e-mails de desenvolvimento, redirecione a porta do MailHog:
 `kubectl port-forward svc/mailhog 8025:8025`
