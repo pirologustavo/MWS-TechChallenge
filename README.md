@@ -98,6 +98,8 @@ O script reutiliza os Secrets existentes, cria os ausentes e provisiona cinco da
 
 No EKS, provisione os databases e usuários no RDS e aplique `k8s/mws-service-secrets.yaml.example` com valores reais, mais os Secrets do RabbitMQ e MongoDB. Ajuste `DB_HOST` no ConfigMap antes de aplicar os manifests. O bootstrap de desenvolvimento não altera o EKS. O CD de cada API aplica seus manifests e executa migrations antes de liberar a nova versão.
 
+No EKS do laboratório com restrições IAM, MongoDB e RabbitMQ podem usar volumes persistentes locais dos nós. Execute `python3 scripts/configure-local-storage.py --context mws-eks`. Veja [configuração e recuperação do armazenamento local](k8s/overlays/eks-local/README.md). Os dados sobrevivem à recriação dos pods no mesmo nó; a perda ou substituição do nó exige restauração de backup.
+
 Para acessar o painel de interceptação de e-mails de desenvolvimento, redirecione a porta do MailHog:
 `kubectl port-forward svc/mailhog 8025:8025`
 

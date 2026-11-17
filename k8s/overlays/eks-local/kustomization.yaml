@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../mongodb.yaml
+  - ../../rabbitmq.yaml
+  - storageclass.yaml
+patches:
+  - target:
+      kind: StatefulSet
+    patch: |-
+      - op: add
+        path: /spec/volumeClaimTemplates/0/spec/storageClassName
+        value: mws-local
+  - target:
+      kind: StatefulSet
+      name: rabbitmq
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/securityContext/fsGroup
