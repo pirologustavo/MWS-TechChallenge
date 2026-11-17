@@ -125,6 +125,9 @@ O cenário BDD do ciclo de OS roda em uma etapa própria do pipeline e está em
 está em `OrdemServicoControllerTest`.
 
 ## Documentação e APIs
+
+[Collections Postman e roteiro de apresentação](docs/postman/README.md) · [Ambiente compartilhado](docs/postman/mws-apresentacao.postman_environment.json).
+
 A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo:
 [Estratégia de comunicação entre microsserviços](./docs/estrategia-comunicacao-microsservicos.md)
 [Acesse a Documentação no Notion](https://www.notion.so/TECH-CHALLENGE-338b36cb511a80cb9c12d5c70c5682c7?source=copy_link)

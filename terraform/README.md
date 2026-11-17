@@ -1,5 +1,36 @@
 # Terraform - Infraestrutura AWS
 
+## Conta AWS ativa
+
+A configuração aponta para a conta **058264081666**, região **us-east-1**. O provider usa `allowed_account_ids` para recusar credenciais de outra conta.
+
+O estado dessa conta fica em `state/058264081666/terraform.tfstate`, ignorado pelo Git. Os arquivos antigos `terraform.tfstate` e `terraform.tfstate.backup` foram arquivados em `state/955465104750/`, com conteúdo preservado, e não são utilizados pelo backend atual. Não copie nem migre o estado anterior para o diretório da conta nova.
+
+A partir da raiz do projeto:
+
+```bash
+aws sts get-caller-identity --query Account --output text
+terraform -chdir=terraform init -reconfigure
+terraform -chdir=terraform validate
+terraform -chdir=terraform plan -out=058264081666.tfplan
+```
+
+O comando de identidade deve retornar `058264081666`. Revise o plano antes de criar a infraestrutura. Para aplicar o plano revisado:
+
+```bash
+terraform -chdir=terraform apply 058264081666.tfplan
+```
+
+Somente depois do provisionamento concluído configure o acesso ao cluster:
+
+```bash
+aws eks update-kubeconfig --name mws-cluster --region us-east-1 --alias mws-eks
+kubectl --context mws-eks get nodes
+```
+
+Se as credenciais temporárias expirarem ou houver alterações na infraestrutura, renove as credenciais e gere um novo plano antes de aplicar.
+
+
 ## Visão Geral
 
 Este diretório contém os arquivos Terraform responsáveis pela definição e provisionamento da infraestrutura em nuvem utilizada pelo projeto de microserviços.
