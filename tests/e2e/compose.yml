@@ -58,6 +58,9 @@ services:
       - db.runCommand({ping:1}).ok
       interval: 5s
       retries: 20
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: bdd
+      MONGO_INITDB_ROOT_PASSWORD: bdd-mongo-password
   mailhog:
     image: mailhog/mailhog:latest
   payment:
@@ -92,7 +95,7 @@ services:
       RABBITMQ_USER: bdd
       RABBITMQ_PASSWORD: bdd-rabbit-password
       OS_APPROVAL_SECRET: bdd-approval-secret
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://bdd:bdd-mongo-password@mongodb:27017/?authSource=admin
       MONGODB_DATABASE: bdd_audit
       MERCADOPAGO_ACCESS_TOKEN: bdd-token
       MERCADOPAGO_BASE_URL: http://payment:8080
@@ -141,7 +144,7 @@ services:
       RABBITMQ_USER: bdd
       RABBITMQ_PASSWORD: bdd-rabbit-password
       OS_APPROVAL_SECRET: bdd-approval-secret
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://bdd:bdd-mongo-password@mongodb:27017/?authSource=admin
       MONGODB_DATABASE: bdd_audit
       MERCADOPAGO_ACCESS_TOKEN: bdd-token
       MERCADOPAGO_BASE_URL: http://payment:8080
@@ -190,7 +193,7 @@ services:
       RABBITMQ_USER: bdd
       RABBITMQ_PASSWORD: bdd-rabbit-password
       OS_APPROVAL_SECRET: bdd-approval-secret
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://bdd:bdd-mongo-password@mongodb:27017/?authSource=admin
       MONGODB_DATABASE: bdd_audit
       MERCADOPAGO_ACCESS_TOKEN: bdd-token
       MERCADOPAGO_BASE_URL: http://payment:8080
@@ -239,7 +242,7 @@ services:
       RABBITMQ_USER: bdd
       RABBITMQ_PASSWORD: bdd-rabbit-password
       OS_APPROVAL_SECRET: bdd-approval-secret
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://bdd:bdd-mongo-password@mongodb:27017/?authSource=admin
       MONGODB_DATABASE: bdd_audit
       MERCADOPAGO_ACCESS_TOKEN: bdd-token
       MERCADOPAGO_BASE_URL: http://payment:8080
@@ -288,7 +291,7 @@ services:
       RABBITMQ_USER: bdd
       RABBITMQ_PASSWORD: bdd-rabbit-password
       OS_APPROVAL_SECRET: bdd-approval-secret
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://bdd:bdd-mongo-password@mongodb:27017/?authSource=admin
       MONGODB_DATABASE: bdd_audit
       MERCADOPAGO_ACCESS_TOKEN: bdd-token
       MERCADOPAGO_BASE_URL: http://payment:8080
