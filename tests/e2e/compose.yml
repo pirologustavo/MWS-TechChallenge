@@ -1,0 +1,346 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: bdd-root-password
+    healthcheck:
+      test:
+      - CMD
+      - mysqladmin
+      - ping
+      - -h
+      - localhost
+      - -pbdd-root-password
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  db-init:
+    image: mysql:8.0
+    network_mode: service:db
+    entrypoint:
+    - bash
+    - /provision.sh
+    volumes:
+    - ../../scripts/provision-service-databases.sh:/provision.sh:ro
+    environment:
+      MYSQL_ROOT_PASSWORD: bdd-root-password
+      CLIENTE_DB_PASSWORD: bdd-service-password
+      VEICULO_DB_PASSWORD: bdd-service-password
+      ESTOQUE_DB_PASSWORD: bdd-service-password
+      FUNCIONARIO_DB_PASSWORD: bdd-service-password
+      OS_DB_PASSWORD: bdd-service-password
+    depends_on:
+      db:
+        condition: service_healthy
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: bdd
+      RABBITMQ_DEFAULT_PASS: bdd-rabbit-password
+    healthcheck:
+      test:
+      - CMD
+      - rabbitmq-diagnostics
+      - -q
+      - ping
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  mongodb:
+    image: mongo:8.0
+    healthcheck:
+      test:
+      - CMD
+      - mongosh
+      - --quiet
+      - --eval
+      - db.runCommand({ping:1}).ok
+      interval: 5s
+      retries: 20
+  mailhog:
+    image: mailhog/mailhog:latest
+  payment:
+    image: python:3.12-alpine
+    volumes:
+    - ./payment.py:/payment.py:ro
+    command:
+    - python
+    - /payment.py
+  cliente:
+    build:
+      context: ../../Microservicos-lv/php84/Cliente-lv
+    environment:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: '3306'
+      INTERNAL_API_TOKEN: bdd-internal-token
+      FUNCIONARIO_API_URL: http://funcionario
+      CLIENTE_API_URL: http://cliente
+      VEICULO_API_URL: http://veiculo
+      ESTOQUE_API_URL: http://estoque
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: '1025'
+      MAIL_FROM_ADDRESS: bdd@example.test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bdd
+      RABBITMQ_PASSWORD: bdd-rabbit-password
+      OS_APPROVAL_SECRET: bdd-approval-secret
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: bdd_audit
+      MERCADOPAGO_ACCESS_TOKEN: bdd-token
+      MERCADOPAGO_BASE_URL: http://payment:8080
+      DD_TRACE_ENABLED: 'false'
+      DB_DATABASE: cliente_db
+      DB_USERNAME: cliente_app
+      DB_PASSWORD: bdd-service-password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command:
+    - sh
+    - -c
+    - php artisan migrate --force && apache2-foreground
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost/up
+      interval: 3s
+      timeout: 3s
+      retries: 60
+  veiculo:
+    build:
+      context: ../../Microservicos-lv/php84/Veiculo-lv
+    environment:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: '3306'
+      INTERNAL_API_TOKEN: bdd-internal-token
+      FUNCIONARIO_API_URL: http://funcionario
+      CLIENTE_API_URL: http://cliente
+      VEICULO_API_URL: http://veiculo
+      ESTOQUE_API_URL: http://estoque
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: '1025'
+      MAIL_FROM_ADDRESS: bdd@example.test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bdd
+      RABBITMQ_PASSWORD: bdd-rabbit-password
+      OS_APPROVAL_SECRET: bdd-approval-secret
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: bdd_audit
+      MERCADOPAGO_ACCESS_TOKEN: bdd-token
+      MERCADOPAGO_BASE_URL: http://payment:8080
+      DD_TRACE_ENABLED: 'false'
+      DB_DATABASE: veiculo_db
+      DB_USERNAME: veiculo_app
+      DB_PASSWORD: bdd-service-password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command:
+    - sh
+    - -c
+    - php artisan migrate --force && apache2-foreground
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost/up
+      interval: 3s
+      timeout: 3s
+      retries: 60
+  estoque:
+    build: &id003
+      context: ../../Microservicos-lv/php84/Estoque-lv
+    environment: &id004
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: '3306'
+      INTERNAL_API_TOKEN: bdd-internal-token
+      FUNCIONARIO_API_URL: http://funcionario
+      CLIENTE_API_URL: http://cliente
+      VEICULO_API_URL: http://veiculo
+      ESTOQUE_API_URL: http://estoque
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: '1025'
+      MAIL_FROM_ADDRESS: bdd@example.test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bdd
+      RABBITMQ_PASSWORD: bdd-rabbit-password
+      OS_APPROVAL_SECRET: bdd-approval-secret
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: bdd_audit
+      MERCADOPAGO_ACCESS_TOKEN: bdd-token
+      MERCADOPAGO_BASE_URL: http://payment:8080
+      DD_TRACE_ENABLED: 'false'
+      DB_DATABASE: estoque_db
+      DB_USERNAME: estoque_app
+      DB_PASSWORD: bdd-service-password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command:
+    - sh
+    - -c
+    - php artisan migrate --force && apache2-foreground
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost/up
+      interval: 3s
+      timeout: 3s
+      retries: 60
+  funcionario:
+    build:
+      context: ../../Microservicos-lv/php84/Funcionario-lv
+    environment:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: '3306'
+      INTERNAL_API_TOKEN: bdd-internal-token
+      FUNCIONARIO_API_URL: http://funcionario
+      CLIENTE_API_URL: http://cliente
+      VEICULO_API_URL: http://veiculo
+      ESTOQUE_API_URL: http://estoque
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: '1025'
+      MAIL_FROM_ADDRESS: bdd@example.test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bdd
+      RABBITMQ_PASSWORD: bdd-rabbit-password
+      OS_APPROVAL_SECRET: bdd-approval-secret
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: bdd_audit
+      MERCADOPAGO_ACCESS_TOKEN: bdd-token
+      MERCADOPAGO_BASE_URL: http://payment:8080
+      DD_TRACE_ENABLED: 'false'
+      DB_DATABASE: funcionario_db
+      DB_USERNAME: funcionario_app
+      DB_PASSWORD: bdd-service-password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command:
+    - sh
+    - -c
+    - php artisan migrate --force && php artisan db:seed --force && apache2-foreground
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost/up
+      interval: 3s
+      timeout: 3s
+      retries: 60
+  os:
+    build: &id001
+      context: ../../Microservicos-lv/php84/Os-lv
+    environment: &id002
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: '3306'
+      INTERNAL_API_TOKEN: bdd-internal-token
+      FUNCIONARIO_API_URL: http://funcionario
+      CLIENTE_API_URL: http://cliente
+      VEICULO_API_URL: http://veiculo
+      ESTOQUE_API_URL: http://estoque
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      LOG_CHANNEL: stderr
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailhog
+      MAIL_PORT: '1025'
+      MAIL_FROM_ADDRESS: bdd@example.test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bdd
+      RABBITMQ_PASSWORD: bdd-rabbit-password
+      OS_APPROVAL_SECRET: bdd-approval-secret
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: bdd_audit
+      MERCADOPAGO_ACCESS_TOKEN: bdd-token
+      MERCADOPAGO_BASE_URL: http://payment:8080
+      DD_TRACE_ENABLED: 'false'
+      DB_DATABASE: os_db
+      DB_USERNAME: os_app
+      DB_PASSWORD: bdd-service-password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    command:
+    - sh
+    - -c
+    - php artisan migrate --force && apache2-foreground
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost/up
+      interval: 3s
+      timeout: 3s
+      retries: 60
+  os-worker:
+    build: *id001
+    environment: *id002
+    depends_on:
+      os:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command:
+    - sh
+    - -c
+    - (php artisan saga:publish-outbox &) && exec php artisan saga:consume-stock-results
+  estoque-worker:
+    build: *id003
+    environment: *id004
+    depends_on:
+      estoque:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command:
+    - sh
+    - -c
+    - (php artisan saga:publish-outbox &) && exec php artisan saga:consume-stock-adjustments
+  runner:
+    image: python:3.12-alpine
+    volumes:
+    - ./run.py:/run.py:ro
+    entrypoint:
+    - python
+    - /run.py
+    profiles:
+    - test

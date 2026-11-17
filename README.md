@@ -6,13 +6,13 @@ Sistema projetado para a solução operacional de oficinas mecânicas, focando n
 ### Arquitetura e Tecnologias
 A solução foi decomposta em contêineres independentes para garantir alta coesão e isolamento de domínios (Bounded Contexts).
 * **Linguagem:** PHP 8.4 (Laravel Framework nas APIs) e PHP Puro (Front-end)
-* **Banco de Dados:** MySQL 8.0 (Persistência) e SQLite (Testes)
+* **Banco de Dados:** MySQL 8.0 (um database e usuário por API), MongoDB 8.0 (auditoria do Cliente) e SQLite (testes)
 * **Orquestração:** Docker, Docker Compose e Kubernetes (K8s)
-* **Mensageria & Notificações:** SMTP interceptado via MailHog
+* **Mensageria & Notificações:** RabbitMQ (Saga assíncrona) e SMTP via MailHog no desenvolvimento
 * **Padrões:** DDD (Domain Driven Design), Arquitetura Hexagonal, Clean Code.
 
-### Ecossistema de Microsserviços e Front-end: 
-- **Monólito (Front-end):** Interface de usuário centralizada em PHP que consome o ecossistema de APIs via JWT.
+### Ecossistema de Microsserviços e Front-end:
+- **Monólito (Front-end):** Interface de usuário centralizada em PHP que consome o ecossistema de APIs via tokens Sanctum.
 - **Cliente-lv:** Gestão de cadastro de clientes.
 - **Veiculo-lv:** Gestão de frota e vínculos com clientes.
 - **Funcionario-lv:** Gestão de colaboradores e autenticação JWT.
@@ -36,7 +36,11 @@ Cada serviço mantém uma inbox com unicidade por `event_id`; a operação de es
 também usa uma chave idempotente persistida em `stock_operations`. O publicador
 reenvia eventos pendentes; consumidores repetidos não repetem efeitos. Mensagens
 com falhas transitórias aguardam cinco segundos antes de até cinco tentativas e
-depois seguem para a fila `mws.saga.dead`.
+depois seguem para a fila `mws.saga.dead`. A recuperação periódica solicita
+cancelamento remoto após cinco minutos. O Estoque desfaz o ajuste confirmado ou
+impede a aplicação tardia; só então a OS compensa localmente. Reenvios recuperam
+resultados perdidos ou enviados à DLQ. Durante indisponibilidade, a OS permanece
+bloqueada até a confirmação, preservando a consistência do estoque.
 
 Se a reserva inicial falhar, a OS é marcada como cancelada e seus itens ficam
 preservados para auditoria. Se uma edição, análise, cancelamento, rejeição ou
@@ -76,20 +80,19 @@ real.
 ### Opção 1: Ambiente Local (Docker Compose)
 Copie `docker-compose.env.example` para `.env`, substitua os segredos e mantenha `MYSQL_ROOT_PASSWORD` compatível com o volume MySQL existente. Depois execute na raiz: <br>
 `docker compose up -d --build`
-  
+
 ### Configurar os Bancos de Dados e Seeders
 O setup cria os schemas isolados, executa as migrations e, quando há dados legados em `mws_db`, copia os dados preservando IDs e snapshots. Faça backup e pare gravações no banco legado antes do backfill; o script recusa destinos não vazios. Em ambiente novo, cria o usuário inicial. Execute: <br>
 `chmod +x setup.sh` <br>
 `./setup.sh` <br>
 
-## Como executar o projeto
 ### Opção 2: Ambiente Clusterizado (Kubernetes)
 Para deploy no cluster Kubernetes (Minikube ou EKS), provisione primeiro um schema e usuário por serviço no MySQL/RDS, preencha e aplique `k8s/mws-service-secrets.yaml.example` com segredos reais e ajuste o `DB_HOST` em `k8s/mws-configmap.yaml`. Faça backup e backfill dos dados antes de liberar tráfego. Depois aplique os manifests da pasta k8s/ <br>
-`kubectl apply -f k8s/` <br>
+`python3 scripts/bootstrap-kubernetes.py` <br>
 
 Para acessar o painel de interceptação de e-mails de desenvolvimento, redirecione a porta do MailHog:
 `kubectl port-forward svc/mailhog 8025:8025`
-  
+
 ### Credenciais de acesso
 Para testar os endpoints que exigem autenticação: <br>
 `Usuário: admin` <br>
@@ -117,13 +120,12 @@ está em `OrdemServicoControllerTest`.
 A documentação completa, incluindo o Event Storming, Mapa de Contexto e Linguagem Ubíqua, pode ser acessada através do link abaixo:
 [Estratégia de comunicação entre microsserviços](./docs/estrategia-comunicacao-microsservicos.md)
 [Acesse a Documentação no Notion](https://www.notion.so/TECH-CHALLENGE-338b36cb511a80cb9c12d5c70c5682c7?source=copy_link)
-[Endpoints (Postman)] (https://gustavo-5520387.postman.co/workspace/Gustavo's-
-Workspace~e01e23b1-b0c9-4148-8bea-f931ea6d3628/collection/45952571-cfa04a96-
-15fd-4662-b65d-0e6b27d75d80?action=share&creator=45952571)
 
-## Segurança e Vulnerabilidades
-Realizamos scans de segurança utilizando o composer audit
-  - Status Atual: 0 vulnerabilidades críticas encontradas no código de produção
+Collections individuais: [Cliente](Microservicos-lv/php84/Cliente-lv/docs/api.postman_collection.json), [Veículo](Microservicos-lv/php84/Veiculo-lv/docs/api.postman_collection.json), [Estoque](Microservicos-lv/php84/Estoque-lv/docs/api.postman_collection.json), [Funcionário](Microservicos-lv/php84/Funcionario-lv/docs/api.postman_collection.json) e [OS](Microservicos-lv/php84/Os-lv/docs/api.postman_collection.json).
+
+## Segurança e Qualidade
+
+Use `composer audit` para verificar as dependências. Os pipelines aplicam testes, cobertura mínima de 80%, Pint e PHPStan. As chamadas internas usam segredo compartilhado; o acesso público usa tokens Sanctum e links de aprovação assinados.
 
 ## Observabilidade
 
@@ -162,27 +164,14 @@ publica somente a imagem do seu serviço no Amazon ECR, atualiza seus deployment
 no EKS e aguarda o rollout. O fluxo comum está em `cd-service.yml`; não há mais
 um workflow agregado nem um segundo workflow de deploy do Monólito.
 
+## Validação distribuída
+
+O BDD da aplicação roda no CI da OS. O cenário em `tests/e2e` valida as APIs e a Saga com bancos e RabbitMQ reais; somente o provedor externo de pagamento é substituído por um servidor de contrato de teste. Veja [como executar](tests/e2e/README.md).
+
+## Repositórios e proteção da main
+
+Cada API possui repositório próprio, com workflows CI/CD em `.github/workflows`. A `main` exige PR e o check `quality-test-build`. Credenciais temporárias da AWS precisam de `AWS_SESSION_TOKEN` válido; tokens expirados impedem deploy no EKS.
+
 ## Autor
   - Gustavo Pirolo - Cientista da Computação & Trainee Software Development
-  - Apelido do Servidor: Gustavo Pirolo - RM371637 
-
-## Revisão do documento completo (2026-11-14)
-
-A arquitetura permanece com cinco APIs: Cliente, Veículo, Funcionário, Estoque e OS.
-Execução, diagnóstico, orçamento e pagamento pertencem à API OS; não há API Execucao-lv.
-Os limites de serviço sugeridos no enunciado são exemplos, e o mínimo de três APIs é atendido.
-
-A integração inicial Mercado Pago está em Os-lv: criação de Checkout Pro, verificação
-autenticada consultando o provedor e estorno idempotente. A entrega exige pagamento
-confirmado. Configure MERCADOPAGO_ACCESS_TOKEN no ambiente da OS e aplique a migration
-2026_11_14_000001_create_billing_checkouts. Em Kubernetes use o Secret da OS.
-
-[Contrato de pagamentos](Microservicos-lv/php84/Os-lv/docs/payments.postman_collection.json).
-[Pendências e evidências da revisão](docs/fase4-verificacao.md).
-
-Os workflows ci.yml/cd.yml estão na raiz de cada repositório de serviço. O CD aguarda
-sucesso do CI e aplica os manifests locais com a imagem do SHA aprovado.
-
-## Auditoria dos requisitos da Fase 4
-
-[Mapa de requisitos e limites de validação](docs/fase4-requisitos.md). [Resultados locais atualizados](docs/fase4-verificacao.md).
+  - Apelido do Servidor: Gustavo Pirolo - RM371637

@@ -8,7 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 final class ConsumeSagaEvents
 {
-    public function run(string $queue, callable $handler, RabbitMq $rabbit): never
+    public function run(string $queue, callable $handler, RabbitMq $rabbit, bool $once = false): void
     {
         while (true) {
             $connection = null;
@@ -19,12 +19,12 @@ final class ConsumeSagaEvents
                 $rabbit->declareTopology($channel);
                 $channel->basic_qos(null, 1, null);
                 $channel->basic_consume($queue, '', false, false, false, false,
-                    function (AMQPMessage $message) use ($handler, $channel, $rabbit): void {
+                    function (AMQPMessage $message) use ($handler, $channel, $rabbit, $queue): void {
                         try {
                             $event = json_decode($message->getBody(), true, 512, JSON_THROW_ON_ERROR);
                             $handler($event);
                             $message->ack();
-                        } catch (\InvalidArgumentException $exception) {
+                        } catch (\InvalidArgumentException|\JsonException $exception) {
                             Log::critical('Evento inválido enviado para dead-letter', [
                                 'queue' => $queue, 'message_id' => $message->get('message_id'),
                             ]);
@@ -43,15 +43,28 @@ final class ConsumeSagaEvents
                     }
                 );
 
-                while ($channel->is_consuming()) $channel->wait();
+                while ($channel->is_consuming()) {
+                    $channel->wait();
+                }
             } catch (\Throwable $exception) {
                 Log::warning('Conexão do consumidor Saga indisponível; reconectando', [
                     'queue' => $queue, 'exception' => $exception::class,
                 ]);
-                sleep(2);
+                if (! $once) {
+                    sleep(2);
+                }
             } finally {
-                try { $channel?->close(); } catch (\Throwable) {}
-                try { $connection?->close(); } catch (\Throwable) {}
+                try {
+                    $channel?->close();
+                } catch (\Throwable) {
+                }
+                try {
+                    $connection?->close();
+                } catch (\Throwable) {
+                }
+            }
+            if ($once) {
+                return;
             }
         }
     }

@@ -3,11 +3,10 @@
 namespace App\Saga;
 
 use App\Interface\OsStatusInterface;
-use App\Mail\OrcamentoAguardandoAprovacao;
-use App\Models\OrdemServico;
+use App\Jobs\SendEstimate;
 use App\Saga\Infrastructure\Outbox;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use InvalidArgumentException;
 
 final class StockAdjustmentResultHandler
@@ -15,25 +14,34 @@ final class StockAdjustmentResultHandler
     public function handle(array $event): void
     {
         foreach (['event_id', 'event_type', 'saga_id', 'operation_id', 'osid', 'request_event_id'] as $field) {
-            if (empty($event[$field])) throw new InvalidArgumentException("Campo obrigatório ausente: {$field}");
+            if (empty($event[$field])) {
+                throw new InvalidArgumentException("Campo obrigatório ausente: {$field}");
+            }
         }
-        if (!in_array($event['event_type'], ['stock.adjustment.succeeded', 'stock.adjustment.failed'], true)) {
+        if (! in_array($event['event_type'], ['stock.adjustment.succeeded', 'stock.adjustment.failed'], true)) {
             throw new InvalidArgumentException('Tipo de evento de estoque desconhecido.');
         }
 
-        $sendApprovalEmailFor = null;
-        DB::transaction(function () use ($event, &$sendApprovalEmailFor): void {
-            if (DB::table('integration_inbox')->where('event_id', $event['event_id'])->exists()) return;
+        DB::transaction(function () use ($event): void {
+            if (DB::table('integration_inbox')->where('event_id', $event['event_id'])->exists()) {
+                return;
+            }
 
             $operation = DB::table('saga_operations')->where('id', $event['operation_id'])->lockForUpdate()->first();
-            if (!$operation || $operation->request_event_id !== $event['request_event_id']) {
+            if (! $operation || $operation->request_event_id !== $event['request_event_id'] || $operation->id !== $event['saga_id'] || (int) $operation->osid !== (int) $event['osid']) {
                 throw new InvalidArgumentException('Resultado sem operação de Saga correspondente.');
             }
 
-            if ($operation->state === 'PENDING') {
+            if ($operation->state === 'CANCELLING') {
+                if (! empty($event['cancelled'])) {
+                    $this->compensate($operation, $event);
+                }
+            } elseif ($operation->state === 'PENDING') {
                 if ($event['event_type'] === 'stock.adjustment.succeeded') {
                     $this->complete($operation, $event);
-                    if ($operation->operation === 'analysis') $sendApprovalEmailFor = (int) $operation->osid;
+                    if ($operation->operation === 'analysis') {
+                        Queue::connection('database')->push(new SendEstimate((int) $operation->osid));
+                    }
                 } else {
                     $this->compensate($operation, $event);
                 }
@@ -44,19 +52,6 @@ final class StockAdjustmentResultHandler
             ]);
         });
 
-        if ($sendApprovalEmailFor !== null) {
-            $os = OrdemServico::find($sendApprovalEmailFor);
-            if ($os) {
-                try {
-                    Mail::to($os->cliente_email_snapshot ?? 'cliente.teste@mwssandbox.com')
-                        ->send(new OrcamentoAguardandoAprovacao($os));
-                } catch (\Throwable $exception) {
-                    \Illuminate\Support\Facades\Log::error('Falha ao enviar orçamento após Saga de estoque', [
-                        'osid' => $sendApprovalEmailFor, 'correlation_id' => $event['correlation_id'] ?? null,
-                    ]);
-                }
-            }
-        }
     }
 
     private function complete(object $operation, array $event): void

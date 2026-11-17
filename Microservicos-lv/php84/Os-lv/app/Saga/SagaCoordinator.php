@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 final class SagaCoordinator
 {
     public const PENDING = 'PENDENTE';
+
     public const COMPLETED = 'CONCLUIDA';
+
     public const COMPENSATED = 'COMPENSADA';
 
     public function snapshot(OrdemServico $os): array
@@ -29,8 +31,10 @@ final class SagaCoordinator
         ?array $beforeState,
         string $correlationId,
     ): string {
-        $active = DB::table('saga_operations')->where('osid', $osId)->where('state', 'PENDING')->exists();
-        if ($active) abort(409, 'Já existe uma Saga pendente para esta OS.');
+        $active = DB::table('saga_operations')->where('osid', $osId)->whereIn('state', ['PENDING', 'CANCELLING'])->exists();
+        if ($active) {
+            abort(409, 'Já existe uma Saga pendente para esta OS.');
+        }
 
         $sagaId = (string) Str::uuid();
         $eventId = (string) Str::uuid();

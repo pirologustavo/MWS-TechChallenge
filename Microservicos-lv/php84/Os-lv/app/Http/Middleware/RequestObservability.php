@@ -14,7 +14,7 @@ class RequestObservability
     public function handle(Request $request, Closure $next): Response
     {
         $correlationId = (string) $request->header('X-Correlation-ID', '');
-        if ($correlationId === '' || !preg_match('/^[A-Za-z0-9._-]{1,100}$/', $correlationId)) {
+        if ($correlationId === '' || ! preg_match('/^[A-Za-z0-9._-]{1,100}$/', $correlationId)) {
             $correlationId = (string) Str::uuid();
         }
         $request->attributes->set('correlation_id', $correlationId);
@@ -26,6 +26,7 @@ class RequestObservability
             $response = $next($request);
             $status = $response->getStatusCode();
             $response->headers->set('X-Correlation-ID', $correlationId);
+
             return $response;
         } finally {
             $durationMs = (hrtime(true) - $startedAt) / 1_000_000;

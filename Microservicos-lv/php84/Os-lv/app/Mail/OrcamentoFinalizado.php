@@ -32,11 +32,11 @@ class OrcamentoFinalizado extends Mailable
     public function content(): Content
     {
         return new Content(
-            htmlString: "
+            htmlString: '
                 <h1>Olá! Seu veículo está pronto</h1>
                 <p>A sua Ordem de Serviço foi atualizada para o status: <strong>Finalizado</strong>.</p>
                 <p>Por favor, venha retirar seu veículo.</p>
-            ",
+            ',
         );
     }
 }

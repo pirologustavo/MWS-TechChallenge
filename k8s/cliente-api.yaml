@@ -15,74 +15,75 @@ spec:
         tags.datadoghq.com/env: prod
     spec:
       initContainers:
-        - name: wait-for-mongodb
-          image: mongo:8.0
-          envFrom:
-            - secretRef:
-                name: mws-cliente-service-secret
-          command:
-            - sh
-            - -c
-            - until mongosh "$MONGODB_URI" --quiet --eval 'db.runCommand({ ping: 1 }).ok'; do sleep 2; done
+      - name: migrate
+        image: pirolo/cliente-api:latest
+        command:
+        - php
+        - artisan
+        - migrate
+        - --force
+        envFrom: &id001
+        - configMapRef:
+            name: mws-config
+        - secretRef:
+            name: mws-cliente-service-secret
+        env:
+        - &id002
+          name: DB_DATABASE
+          value: cliente_db
       containers:
-        - name: cliente-lv
-          image: pirolo/cliente-api:latest
-          ports:
-            - containerPort: 80
-          livenessProbe:
-            httpGet:
-              path: /up
-              port: 80
-            initialDelaySeconds: 20
-            periodSeconds: 15
-            timeoutSeconds: 3
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: /up
-              port: 80
-            periodSeconds: 10
-            timeoutSeconds: 3
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          envFrom:
-            - configMapRef:
-                name: mws-config
-
-            - secretRef:
-                name: mws-cliente-service-secret
-          env:
-            - name: LOG_CHANNEL
-              value: stderr
-            - name: DD_SERVICE
-              value: cliente-lv
-            - name: DD_ENV
-              value: prod
-            - name: DD_AGENT_HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-            - name: DD_TRACE_AGENT_PORT
-              value: "8126"
-            - name: DD_DOGSTATSD_PORT
-              value: "8125"
-            - name: DD_LOGS_INJECTION
-              value: "true"
-            - name: DB_DATABASE
-              value: cliente_db
-            - name: CLIENTE_API_URL
-              value: http://cliente-lv
-            - name: VEICULO_API_URL
-              value: http://veiculo-lv
-            - name: FUNCIONARIO_API_URL
-              value: http://funcionario-lv
-            - name: ESTOQUE_API_URL
-              value: http://estoque-lv
+      - name: cliente-lv
+        image: pirolo/cliente-api:latest
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /up
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /up
+            port: 80
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom: *id001
+        env:
+        - name: LOG_CHANNEL
+          value: stderr
+        - name: DD_SERVICE
+          value: cliente-lv
+        - name: DD_ENV
+          value: prod
+        - name: DD_AGENT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: DD_TRACE_AGENT_PORT
+          value: '8126'
+        - name: DD_DOGSTATSD_PORT
+          value: '8125'
+        - name: DD_LOGS_INJECTION
+          value: 'true'
+        - *id002
+        - name: CLIENTE_API_URL
+          value: http://cliente-lv
+        - name: VEICULO_API_URL
+          value: http://veiculo-lv
+        - name: FUNCIONARIO_API_URL
+          value: http://funcionario-lv
+        - name: ESTOQUE_API_URL
+          value: http://estoque-lv
 ---
 apiVersion: v1
 kind: Service
@@ -92,6 +93,6 @@ spec:
   selector:
     app: cliente-lv
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+  - protocol: TCP
+    port: 80
+    targetPort: 80

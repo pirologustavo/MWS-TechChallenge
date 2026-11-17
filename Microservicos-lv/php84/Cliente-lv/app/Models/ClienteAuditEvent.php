@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use MongoDB\Laravel\Eloquent\Model;
 
+/** @mixin Builder */
 class ClienteAuditEvent extends Model
 {
     protected $connection = 'mongodb';

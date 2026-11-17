@@ -15,7 +15,9 @@ final class StockAdjustmentService
             ->filter(fn ($item) => $item['qtd'] !== 0)
             ->sortBy('id')->values()->all();
 
-        if (!$normalized) throw new StockAdjustmentRejected('O ajuste de estoque não pode ser zero.');
+        if (! $normalized) {
+            throw new StockAdjustmentRejected('O ajuste de estoque não pode ser zero.');
+        }
 
         return $normalized;
     }
@@ -30,10 +32,12 @@ final class StockAdjustmentService
         } catch (QueryException $exception) {
             $existing = DB::table('stock_operations')->where('idempotency_key', $key)->first();
             if ($existing) {
-                if (!hash_equals($existing->payload_hash, $payloadHash)) {
+                if (! hash_equals($existing->payload_hash, $payloadHash)) {
                     throw new StockAdjustmentRejected('Idempotency-Key reutilizado com outro payload.');
                 }
-                if ($existing->response_json) return json_decode($existing->response_json, true) ?? [];
+                if ($existing->response_json) {
+                    return json_decode($existing->response_json, true) ?? [];
+                }
             }
             throw $exception;
         }
@@ -43,6 +47,7 @@ final class StockAdjustmentService
     {
         $normalized = $this->normalize($items);
         $payloadHash = hash('sha256', json_encode($normalized, JSON_THROW_ON_ERROR));
+
         return $this->applyNormalized($key, $normalized, $payloadHash);
     }
 
@@ -54,10 +59,12 @@ final class StockAdjustmentService
 
         $existing = DB::table('stock_operations')->where('idempotency_key', $key)->first();
         if ($existing) {
-            if (!hash_equals($existing->payload_hash, $payloadHash)) {
+            if (! hash_equals($existing->payload_hash, $payloadHash)) {
                 throw new StockAdjustmentRejected('Idempotency-Key reutilizado com outro payload.');
             }
-            if ($existing->response_json) return json_decode($existing->response_json, true) ?? [];
+            if ($existing->response_json) {
+                return json_decode($existing->response_json, true) ?? [];
+            }
             throw new StockAdjustmentRejected('A operação idempotente anterior está incompleta.');
         }
 
@@ -69,7 +76,7 @@ final class StockAdjustmentService
         $stocks = [];
         foreach ($items as $item) {
             $stock = Estoque::where('estoqid', $item['id'])->lockForUpdate()->first();
-            if (!$stock || (!$stock->ativo && $item['qtd'] > 0)) {
+            if (! $stock || (! $stock->ativo && $item['qtd'] > 0)) {
                 throw new StockAdjustmentRejected('Item inexistente ou arquivado.');
             }
             if ($item['qtd'] > 0 && $stock->tipo === 'peca' && $stock->quantidade_atual < $item['qtd']) {
@@ -80,9 +87,14 @@ final class StockAdjustmentService
 
         foreach ($items as $item) {
             $stock = $stocks[$item['id']];
-            if ($stock->tipo !== 'peca') continue;
-            if ($item['qtd'] > 0) $stock->decrement('quantidade_atual', $item['qtd']);
-            else $stock->increment('quantidade_atual', abs($item['qtd']));
+            if ($stock->tipo !== 'peca') {
+                continue;
+            }
+            if ($item['qtd'] > 0) {
+                $stock->decrement('quantidade_atual', $item['qtd']);
+            } else {
+                $stock->increment('quantidade_atual', abs($item['qtd']));
+            }
         }
 
         $body = ['message' => 'Estoque ajustado com sucesso.', 'items' => $items];

@@ -32,10 +32,10 @@ class OrcamentoEmDiagnostico extends Mailable
     public function content(): Content
     {
         return new Content(
-            htmlString: "
+            htmlString: '
                 <h1>Olá! Foi concluído o diagnóstico do seu veículo</h1>
                 <p>A sua Ordem de Serviço foi atualizada para o status: <strong>Em diagnóstico</strong>.</p>
-            ",
+            ',
         );
     }
 }

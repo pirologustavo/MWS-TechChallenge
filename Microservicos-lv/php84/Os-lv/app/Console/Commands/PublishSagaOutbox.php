@@ -3,14 +3,15 @@
 namespace App\Console\Commands;
 
 use App\Saga\Infrastructure\RabbitMq;
+use App\Support\DogStatsD;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Support\DogStatsD;
 
 class PublishSagaOutbox extends Command
 {
     protected $signature = 'saga:publish-outbox {--once : Publish one batch and exit}';
+
     protected $description = 'Publish committed Saga events from the transactional outbox';
 
     public function handle(RabbitMq $rabbit): int
@@ -55,12 +56,16 @@ class PublishSagaOutbox extends Command
                 $connection->close();
             } catch (\Throwable $exception) {
                 Log::warning('RabbitMQ indisponível para publicação da outbox', ['exception' => $exception::class]);
-                if ($this->option('once')) return self::FAILURE;
+                if ($this->option('once')) {
+                    return self::FAILURE;
+                }
                 sleep(2);
             }
 
-            if (!$this->option('once')) sleep(1);
-        } while (!$this->option('once'));
+            if (! $this->option('once')) {
+                sleep(1);
+            }
+        } while (! $this->option('once'));
 
         return self::SUCCESS;
     }

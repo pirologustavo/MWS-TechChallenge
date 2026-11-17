@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use App\Services\ClienteAuditTrail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class ClienteController extends Controller
 {
@@ -16,13 +16,13 @@ class ClienteController extends Controller
     {
         // Validação
         $validator = Validator::make($request->all(), [
-            'nome'     => 'required|string|min:3',
-            'email'    => 'required|email|unique:clientes',
-            'cpf'      => 'required|string|size:11|unique:clientes',
-            'cep'      => 'required|string',
+            'nome' => 'required|string|min:3',
+            'email' => 'required|email|unique:clientes',
+            'cpf' => 'required|string|size:11|unique:clientes',
+            'cep' => 'required|string',
             'endereco' => 'required|string',
-            'estado'   => 'required|string|size:2',
-            'cidade'   => 'required|string',
+            'estado' => 'required|string|size:2',
+            'cidade' => 'required|string',
             'telefone' => 'required|string',
         ]);
 
@@ -35,7 +35,7 @@ class ClienteController extends Controller
 
         return response()->json([
             'message' => 'Cliente cadastrado com sucesso no Microserviço!',
-            'data'    => $cliente
+            'data' => $cliente,
         ], 201);
     }
 
@@ -44,8 +44,8 @@ class ClienteController extends Controller
         $busca = $request->query('q');
 
         $clientes = Cliente::where('nome', 'like', "%{$busca}%")
-        ->limit(10)
-        ->get(['clientid', 'nome']);
+            ->limit(10)
+            ->get(['clientid', 'nome']);
 
         return response()->json($clientes);
     }
@@ -59,7 +59,7 @@ class ClienteController extends Controller
     {
         $cliente = Cliente::where('clientid', $id)->first();
 
-        if (!$cliente) {
+        if (! $cliente) {
             return response()->json(['message' => 'Cliente não encontrado!'], 404);
         }
 
@@ -70,14 +70,14 @@ class ClienteController extends Controller
     {
         $cliente = Cliente::where('clientid', $id)->first();
 
-        if (!$cliente) {
+        if (! $cliente) {
             return response()->json(['message' => 'Cliente não encontrado!'], 404);
         }
 
         $dados = $request->all();
 
         if (isset($dados['cpf'])) {
-            $dados['cpf'] = preg_replace("/\D/", "", $dados['cpf']);
+            $dados['cpf'] = preg_replace("/\D/", '', $dados['cpf']);
         }
 
         $cliente->fill($dados);
@@ -89,7 +89,7 @@ class ClienteController extends Controller
 
         return response()->json([
             'message' => 'Cliente atualizado com sucesso!',
-            'data' => $cliente
+            'data' => $cliente,
         ]);
     }
 
@@ -98,7 +98,7 @@ class ClienteController extends Controller
         $cliente = DB::transaction(function () use ($id) {
             $cliente = Cliente::where('clientid', $id)->first();
 
-            if (!$cliente) {
+            if (! $cliente) {
                 return null;
             }
 
@@ -107,7 +107,9 @@ class ClienteController extends Controller
             return $cliente;
         });
 
-        if (!$cliente) return response()->json(['message' => 'Cliente não encontrado'], 404);
+        if (! $cliente) {
+            return response()->json(['message' => 'Cliente não encontrado'], 404);
+        }
 
         $auditTrail->record((int) $cliente->clientid, 'deleted', ['deleted'], $request->attributes->get('correlation_id') ?? $request->header('X-Correlation-ID'));
 
@@ -116,7 +118,7 @@ class ClienteController extends Controller
 
     public function auditoria(string $id, ClienteAuditTrail $auditTrail)
     {
-        if (!ctype_digit($id) || (int) $id < 1) {
+        if (! ctype_digit($id) || (int) $id < 1) {
             return response()->json(['message' => 'ID de cliente inválido.'], 422);
         }
 
@@ -127,6 +129,7 @@ class ClienteController extends Controller
                 'client_id' => (int) $id,
                 'exception' => $exception::class,
             ]);
+
             return response()->json(['message' => 'Histórico de auditoria indisponível.'], 503);
         }
     }

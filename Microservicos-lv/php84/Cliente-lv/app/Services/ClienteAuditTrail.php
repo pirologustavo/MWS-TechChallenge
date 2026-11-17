@@ -9,11 +9,16 @@ use Throwable;
 
 class ClienteAuditTrail
 {
+    protected function query()
+    {
+        return ClienteAuditEvent::query();
+    }
+
     /** @param list<string> $fields */
     public function record(int $clientId, string $event, array $fields, ?string $correlationId = null): void
     {
         try {
-            ClienteAuditEvent::create([
+            $this->query()->create([
                 'client_id' => $clientId,
                 'event' => $event,
                 'fields' => array_values(array_unique($fields)),
@@ -34,7 +39,7 @@ class ClienteAuditTrail
     /** @return Collection<int, ClienteAuditEvent> */
     public function history(int $clientId): Collection
     {
-        return ClienteAuditEvent::query()
+        return $this->query()
             ->where('client_id', $clientId)
             ->orderByDesc('occurred_at')
             ->limit(100)

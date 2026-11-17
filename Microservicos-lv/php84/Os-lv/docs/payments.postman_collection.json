@@ -1,0 +1,63 @@
+{
+  "info": {
+    "name": "OS - Mercado Pago",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Criar checkout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{os_base_url}}/api/os/{{osid}}/checkout"
+      }
+    },
+    {
+      "name": "Verificar pagamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{os_base_url}}/api/os/{{osid}}/pagamento/verificar",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"payment_id\": \"{{payment_id}}\"}"
+        }
+      }
+    },
+    {
+      "name": "Estornar pagamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{os_base_url}}/api/os/{{osid}}/pagamento/estornar"
+      }
+    }
+  ]
+}

@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use App\Models\Cliente;
 use App\Services\ClienteAuditTrail;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
 class ClienteControllerTest extends TestCase
 {
@@ -15,6 +15,7 @@ class ClienteControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['services.internal.funcionario' => 'http://funcionario.test']);
 
         Http::fake(['*' => Http::response(['valid' => true], 200)]);
         $this->withToken('test-user-token');
@@ -25,13 +26,13 @@ class ClienteControllerTest extends TestCase
     public function test_deve_cadastrar_um_cliente_com_sucesso()
     {
         $dados = [
-            'nome'     => 'Gustavo Pirolo',
-            'email'    => 'gustavo@exemplo.com',
-            'cpf'      => '12345678901',
-            'cep'      => '06000000',
+            'nome' => 'Gustavo Pirolo',
+            'email' => 'gustavo@exemplo.com',
+            'cpf' => '12345678901',
+            'cep' => '06000000',
             'endereco' => 'Rua de Osasco',
-            'estado'   => 'SP',
-            'cidade'   => 'Osasco',
+            'estado' => 'SP',
+            'cidade' => 'Osasco',
             'telefone' => '11999999999',
         ];
 
@@ -66,7 +67,7 @@ class ClienteControllerTest extends TestCase
             'endereco' => 'Osasco',
             'estado' => 'SP',
             'cidade' => 'Osasco',
-            'telefone' => '1199999999'
+            'telefone' => '1199999999',
         ]);
 
         $response = $this->getJson("/api/clientes/buscarPorId/{$cliente->clientid}");
@@ -78,7 +79,7 @@ class ClienteControllerTest extends TestCase
     /** @test */
     public function test_deve_retornar_404_se_cliente_nao_existir()
     {
-        $response = $this->getJson("/api/clientes/buscarPorId/9999");
+        $response = $this->getJson('/api/clientes/buscarPorId/9999');
         $response->assertStatus(404);
         $response->assertJsonPath('message', 'Cliente não encontrado!');
     }
@@ -89,7 +90,7 @@ class ClienteControllerTest extends TestCase
         Cliente::create(['nome' => 'Marcos Silva', 'email' => 'm@a.com', 'cpf' => '1', 'cep' => '1', 'endereco' => '1', 'estado' => 'SP', 'cidade' => '1', 'telefone' => '1']);
         Cliente::create(['nome' => 'Maria Oliveira', 'email' => 'm@b.com', 'cpf' => '2', 'cep' => '1', 'endereco' => '1', 'estado' => 'SP', 'cidade' => '1', 'telefone' => '1']);
 
-        $response = $this->getJson("/api/clientes/buscar?q=Maria");
+        $response = $this->getJson('/api/clientes/buscar?q=Maria');
 
         $response->assertStatus(200);
         $response->assertJsonCount(1);
@@ -103,7 +104,7 @@ class ClienteControllerTest extends TestCase
 
         $dadosNovos = [
             'nome' => 'Nome Atualizado',
-            'cpf' => '222.222.222-22'
+            'cpf' => '222.222.222-22',
         ];
 
         $response = $this->putJson("/api/clientes/atualizarCliente/{$cliente->clientid}", $dadosNovos);
@@ -112,7 +113,7 @@ class ClienteControllerTest extends TestCase
         $this->assertDatabaseHas('clientes', [
             'clientid' => $cliente->clientid,
             'nome' => 'Nome Atualizado',
-            'cpf' => '22222222222'
+            'cpf' => '22222222222',
         ]);
     }
 

@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
+use App\Support\DogStatsD;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/** @mixin Builder */
 class OrdemServico extends Model
 {
     protected $table = 'os';
+
     protected $primaryKey = 'osid';
 
     protected $fillable = [
         'clientid', 'carid', 'funcid', 'sintomas', 'valor_total', 'status_atual', 'statid_atual', 'entregue',
-        'cliente_nome_snapshot', 'cliente_email_snapshot', 'veiculo_modelo_snapshot', 'veiculo_placa_snapshot', 'funcionario_nome_snapshot', 'analise', 'status_changed_at', 'saga_status'
+        'cliente_nome_snapshot', 'cliente_email_snapshot', 'veiculo_modelo_snapshot', 'veiculo_placa_snapshot', 'funcionario_nome_snapshot', 'analise', 'status_changed_at', 'saga_status',
     ];
 
     protected function casts(): array
@@ -28,7 +32,9 @@ class OrdemServico extends Model
         });
 
         static::updating(function (self $os): void {
-            if (!$os->isDirty('status_atual')) return;
+            if (! $os->isDirty('status_atual')) {
+                return;
+            }
 
             $previousStatus = (string) $os->getOriginal('status_atual');
             $startedAt = $os->status_changed_at ?? Carbon::parse($os->getRawOriginal('updated_at') ?? $os->getRawOriginal('created_at'));
@@ -41,7 +47,7 @@ class OrdemServico extends Model
             };
             if ($statusTag !== 'outro') {
                 DB::afterCommit(static function () use ($durationSeconds, $statusTag): void {
-                    \App\Support\DogStatsD::metric('mws.os.status.duration', $durationSeconds, 'h', [
+                    DogStatsD::metric('mws.os.status.duration', $durationSeconds, 'h', [
                         'service' => 'os-lv', 'status' => $statusTag,
                     ]);
                 });
@@ -59,5 +65,4 @@ class OrdemServico extends Model
     {
         return $this->hasMany(OrdemServicoStatus::class, 'osid', 'osid');
     }
-
 }

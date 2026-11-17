@@ -33,7 +33,7 @@ class OrcamentoAguardandoAprovacao extends Mailable
     {
         $token = hash_hmac('sha256', (string) $this->os->osid, (string) config('services.os_approval_secret'));
 
-        $urlMonolito = env('MONOLITO_URL') . "/os/aprovacao.php?id={$this->os->osid}&token={$token}";
+        $urlMonolito = env('MONOLITO_URL')."/os/aprovacao.php?id={$this->os->osid}&token={$token}";
 
         return new Content(
             htmlString: "

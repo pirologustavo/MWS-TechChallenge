@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Funcionario;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -17,7 +17,7 @@ class AuthController extends Controller
 
         $user = Funcionario::where('usr', $request->usr)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Credenciais inválidas.'], 411);
         }
 
@@ -27,9 +27,9 @@ class AuthController extends Controller
         return response()->json([
             'token' => $token,
             'user' => [
-                'nome'  => $user->nome, // Se na tabela for 'nome', certifique-se de adicionar no #Fillable do User.php se necessário
-                'cargo' => $user->cargo
-            ]
+                'nome' => $user->nome, // Se na tabela for 'nome', certifique-se de adicionar no #Fillable do User.php se necessário
+                'cargo' => $user->cargo,
+            ],
         ]);
     }
 }

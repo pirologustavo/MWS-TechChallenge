@@ -226,7 +226,7 @@ class OsRepository extends BaseRepository implements OsRepositoryInterface
         ]);
 
         try {
-            $response = $osApi->post("/api/os/aprovarOsUsuario/{$id}");
+            $response = $osApi->post("/api/os/aprovarOsUsuario/{$id}", ['headers' => ['X-Approval-Signature' => hash_hmac('sha256', (string) $id, (string) ($_ENV['OS_APPROVAL_SECRET'] ?? ''))]]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
@@ -241,7 +241,7 @@ class OsRepository extends BaseRepository implements OsRepositoryInterface
         ]);
 
         try {
-            $response = $osApi->post("/api/os/reprovarOsUsuario/{$id}");
+            $response = $osApi->post("/api/os/reprovarOsUsuario/{$id}", ['headers' => ['X-Approval-Signature' => hash_hmac('sha256', (string) $id, (string) ($_ENV['OS_APPROVAL_SECRET'] ?? ''))]]);
             return json_decode($response->getBody()->getContents());
         } catch (Exception $e) {
             throw new Exception("Erro na API: " . $e->getMessage());
