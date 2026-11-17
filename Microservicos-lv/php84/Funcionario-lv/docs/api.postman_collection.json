@@ -1,0 +1,230 @@
+{
+  "info": {
+    "name": "Funcionario-lv API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8004"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "internal_token",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "osid",
+      "value": "1"
+    },
+    {
+      "key": "cpf",
+      "value": ""
+    },
+    {
+      "key": "payment_id",
+      "value": ""
+    },
+    {
+      "key": "operation_id",
+      "value": ""
+    },
+    {
+      "key": "signature",
+      "value": ""
+    },
+    {
+      "key": "request_id",
+      "value": ""
+    },
+    {
+      "key": "webhook_signature",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "usr",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /api/funcionario",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/funcionario",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\FuncionarioController@index. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /api/funcionario/buscarMecanico",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/funcionario/buscarMecanico",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\FuncionarioController@buscarMecanico. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /api/internal/v1/funcionarios",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/internal/v1/funcionarios?ids[0]={{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          },
+          {
+            "key": "X-Internal-Token",
+            "value": "{{internal_token}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "GET /api/internal/v1/token",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/internal/v1/token",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          },
+          {
+            "key": "X-Internal-Token",
+            "value": "{{internal_token}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /api/login",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/login",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\AuthController@login. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usr\": \"{{usr}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/ping",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/ping",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    }
+  ]
+}

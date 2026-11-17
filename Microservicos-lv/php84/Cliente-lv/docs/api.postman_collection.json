@@ -1,0 +1,335 @@
+{
+  "info": {
+    "name": "Cliente-lv API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "internal_token",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "osid",
+      "value": "1"
+    },
+    {
+      "key": "cpf",
+      "value": ""
+    },
+    {
+      "key": "payment_id",
+      "value": ""
+    },
+    {
+      "key": "operation_id",
+      "value": ""
+    },
+    {
+      "key": "signature",
+      "value": ""
+    },
+    {
+      "key": "request_id",
+      "value": ""
+    },
+    {
+      "key": "webhook_signature",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "usr",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "POST /api/clientes",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/clientes",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@store. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cliente Teste\",\n  \"email\": \"cliente@example.test\",\n  \"cpf\": \"12345678901\",\n  \"cep\": \"01001000\",\n  \"endereco\": \"Rua Teste, 1\",\n  \"estado\": \"SP\",\n  \"cidade\": \"São Paulo\",\n  \"telefone\": \"11999999999\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/clientes",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/clientes",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@index. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PUT /api/clientes/atualizarCliente/{id}",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/clientes/atualizarCliente/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@atualizarCliente. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cliente Teste\",\n  \"email\": \"cliente@example.test\",\n  \"cpf\": \"12345678901\",\n  \"cep\": \"01001000\",\n  \"endereco\": \"Rua Teste, 1\",\n  \"estado\": \"SP\",\n  \"cidade\": \"São Paulo\",\n  \"telefone\": \"11999999999\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/clientes/buscar",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/clientes/buscar",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@buscar. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /api/clientes/buscarPorId/{id}",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/clientes/buscarPorId/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@buscarPorId. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /api/clientes/deletarCliente/{id}",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/clientes/deletarCliente/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@deletarCliente. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/clientes/{id}/auditoria",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/clientes/{{id}}/auditoria",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\ClienteController@auditoria. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /api/internal/v1/clientes",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/internal/v1/clientes?ids[0]={{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          },
+          {
+            "key": "X-Internal-Token",
+            "value": "{{internal_token}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "GET /api/ping",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/ping",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "Veiculo-lv API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8002"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "internal_token",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "osid",
+      "value": "1"
+    },
+    {
+      "key": "cpf",
+      "value": ""
+    },
+    {
+      "key": "payment_id",
+      "value": ""
+    },
+    {
+      "key": "operation_id",
+      "value": ""
+    },
+    {
+      "key": "signature",
+      "value": ""
+    },
+    {
+      "key": "request_id",
+      "value": ""
+    },
+    {
+      "key": "webhook_signature",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "usr",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /api/internal/v1/veiculos",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/internal/v1/veiculos?ids[0]={{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          },
+          {
+            "key": "X-Internal-Token",
+            "value": "{{internal_token}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "GET /api/ping",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/ping",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "Closure. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "PUT /api/veiculos/atualizarVeiculo/{id}",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/veiculos/atualizarVeiculo/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@atualizarVeiculo. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"modelo\": \"Gol\",\n  \"marca\": \"VW\",\n  \"placa\": \"ABC1D23\",\n  \"ano\": 2020,\n  \"clientid\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/veiculos/buscarPorId/{id}",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/veiculos/buscarPorId/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@buscarPorId. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /api/veiculos/buscarVeiculoCliente/{id}",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/veiculos/buscarVeiculoCliente/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@buscarVeiculoCliente. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /api/veiculos/deletarVeiculo/{id}",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/veiculos/deletarVeiculo/{{id}}",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@deletarVeiculo. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "GET /api/veiculos/listar",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/veiculos/listar",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@listar. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /api/veiculos/salvar",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/veiculos/salvar",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Correlation-ID",
+            "value": "{{$guid}}"
+          }
+        ],
+        "description": "App\\Http\\Controllers\\Api\\VeiculoController@salvar. Substitua os identificadores pelas entidades do seu ambiente.",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clientid\": 1,\n  \"carid\": 1,\n  \"funcid\": 1,\n  \"sintomas\": \"Ruído\",\n  \"itens\": [\n    {\n      \"id\": 1,\n      \"qtd\": 1\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

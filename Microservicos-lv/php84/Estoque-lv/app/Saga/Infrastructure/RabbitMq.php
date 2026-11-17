@@ -7,9 +7,10 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 
-final class RabbitMq
+class RabbitMq
 {
     public const EXCHANGE = 'mws.saga';
+
     public const DEAD_EXCHANGE = 'mws.saga.dead';
 
     public function connect(): AMQPStreamConnection
@@ -76,6 +77,7 @@ final class RabbitMq
         if ($retryCount >= 5) {
             $channel->basic_publish($this->copyMessage($message, $retryCount), self::DEAD_EXCHANGE, 'exhausted');
             DogStatsD::metric('mws.saga.dead_letter', 1, 'c', ['service' => 'os-lv']);
+
             return;
         }
 

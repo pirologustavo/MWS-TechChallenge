@@ -1,0 +1,48 @@
+name: CD - Veiculo-lv
+
+on:
+  workflow_run:
+    workflows: [CI - Veiculo-lv]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push approved image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          image="$REGISTRY/veiculo-lv:$IMAGE_TAG"
+          docker build --tag "$image" .
+          docker push "$image"
+      - name: Configure Kubernetes access
+        run: aws eks update-kubeconfig --name mws-cluster --region "${{ secrets.AWS_REGION }}"
+      - name: Apply manifests with the CI-approved image and wait for rollout
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          image="$REGISTRY/veiculo-lv:$IMAGE_TAG"
+          sed -i "s#pirolo/veiculo-api:latest#$image#g" deploy/k8s/*.yaml
+          kubectl apply -f deploy/k8s/
+          kubectl rollout status deployment/veiculo-lv --namespace default --timeout=10m

@@ -2,10 +2,11 @@
 
 namespace App\Http\Service;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use App\Support\DogStatsD;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ServicoInterno
@@ -20,7 +21,7 @@ class ServicoInterno
         $request = request();
         $correlationId = $request->attributes->get('correlation_id')
             ?? $request->header('X-Correlation-ID')
-            ?? (string) \Illuminate\Support\Str::uuid();
+            ?? (string) Str::uuid();
         $request->attributes->set('correlation_id', $correlationId);
 
         for ($attempt = 0; $attempt < 2; $attempt++) {
@@ -30,11 +31,13 @@ class ServicoInterno
                     'X-Correlation-ID' => $correlationId,
                     'Idempotency-Key' => $idempotencyKey,
                 ])->connectTimeout(2)->timeout(5)->post(
-                    rtrim($baseUrl, '/') . '/api/internal/v1/stock-adjustments',
+                    rtrim($baseUrl, '/').'/api/internal/v1/stock-adjustments',
                     ['items' => $itens]
                 );
-                if ($response->serverError() && $attempt === 0) continue;
-                if (!$response->successful()) {
+                if ($response->serverError() && $attempt === 0) {
+                    continue;
+                }
+                if (! $response->successful()) {
                     DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'os-lv', 'dependency' => 'estoque']);
                     Log::warning('Falha em ajuste de estoque entre serviços', [
                         'status' => $response->status(), 'correlation_id' => $correlationId,
@@ -42,9 +45,12 @@ class ServicoInterno
                     throw new HttpException($response->status() >= 400 && $response->status() < 500 ? $response->status() : 503,
                         'Não foi possível ajustar o estoque.');
                 }
+
                 return $response->json() ?? [];
             } catch (ConnectionException $exception) {
-                if ($attempt === 0) continue;
+                if ($attempt === 0) {
+                    continue;
+                }
                 DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'os-lv', 'dependency' => 'estoque']);
                 Log::warning('Serviço de estoque inacessível durante ajuste', ['correlation_id' => $correlationId]);
                 throw new HttpException(503, 'Serviço de estoque indisponível.');
@@ -68,6 +74,7 @@ class ServicoInterno
                 $loteParametros['ids'] = $lote;
                 $resultados = array_merge($resultados, $this->consultar($servico, $caminho, $loteParametros));
             }
+
             return $resultados;
         }
 
@@ -76,11 +83,11 @@ class ServicoInterno
             DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'os-lv', 'dependency' => $servico]);
             throw new HttpException(503, 'Serviço dependente não configurado.');
         }
-        $url = rtrim($baseUrl, '/') . $caminho;
+        $url = rtrim($baseUrl, '/').$caminho;
         $currentRequest = request();
         $correlationId = $currentRequest->attributes->get('correlation_id')
             ?? $currentRequest->header('X-Correlation-ID')
-            ?? (string) \Illuminate\Support\Str::uuid();
+            ?? (string) Str::uuid();
         $currentRequest->attributes->set('correlation_id', $correlationId);
 
         try {
@@ -93,7 +100,7 @@ class ServicoInterno
                 ->timeout(5)
                 ->get($url, $parametros);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'os-lv', 'dependency' => $servico]);
                 Log::warning('Falha em chamada entre serviços', [
                     'service' => $servico,

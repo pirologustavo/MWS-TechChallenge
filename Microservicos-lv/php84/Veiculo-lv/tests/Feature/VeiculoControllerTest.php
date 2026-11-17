@@ -4,9 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Veiculo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
-use Tests\TestCase;
 use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
 class VeiculoControllerTest extends TestCase
 {
@@ -15,6 +16,7 @@ class VeiculoControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['services.internal.funcionario' => 'http://funcionario.test', 'services.internal.cliente' => 'http://cliente.test']);
         DB::statement('CREATE TABLE clientes (clientid INTEGER PRIMARY KEY, nome TEXT)');
         DB::table('clientes')->insert(['clientid' => 1, 'nome' => 'Gustavo Pirolo']);
 
@@ -25,6 +27,7 @@ class VeiculoControllerTest extends TestCase
             if (str_contains($request->url(), '/api/internal/v1/clientes')) {
                 return Http::response([['clientid' => 1, 'nome' => 'Gustavo Pirolo']], 200);
             }
+
             return Http::response([], 200);
         });
         $this->withToken('test-user-token');
@@ -34,11 +37,11 @@ class VeiculoControllerTest extends TestCase
     public function test_deve_cadastrar_um_veiculo_com_sucesso()
     {
         $dados = [
-            'modelo'   => 'Golf GTI',
-            'marca'    => 'Volkswagen',
-            'placa'    => 'ABC1D23',
-            'ano'      => 2024,
-            'clientid' => 1
+            'modelo' => 'Golf GTI',
+            'marca' => 'Volkswagen',
+            'placa' => 'ABC1D23',
+            'ano' => 2024,
+            'clientid' => 1,
         ];
 
         $response = $this->postJson('/api/veiculos/salvar', $dados);
@@ -52,7 +55,7 @@ class VeiculoControllerTest extends TestCase
     public function test_nao_deve_cadastrar_veiculo_com_placa_invalida()
     {
         $dados = [
-            'modelo' => 'Fusca', 'marca' => 'VW', 'placa' => '123-AAAA', 'ano' => 1970, 'clientid' => 1
+            'modelo' => 'Fusca', 'marca' => 'VW', 'placa' => '123-AAAA', 'ano' => 1970, 'clientid' => 1,
         ];
 
         $response = $this->postJson('/api/veiculos/salvar', $dados);
@@ -89,7 +92,7 @@ class VeiculoControllerTest extends TestCase
         Veiculo::create(['modelo' => 'Carro 1', 'marca' => 'M1', 'placa' => 'AAA0A01', 'ano' => 2020, 'clientid' => 1]);
         Veiculo::create(['modelo' => 'Carro 2', 'marca' => 'M2', 'placa' => 'BBB0B02', 'ano' => 2021, 'clientid' => 1]);
 
-        $response = $this->getJson("/api/veiculos/buscarVeiculoCliente/1");
+        $response = $this->getJson('/api/veiculos/buscarVeiculoCliente/1');
 
         $response->assertStatus(200);
         $response->assertJsonCount(2);
@@ -101,7 +104,7 @@ class VeiculoControllerTest extends TestCase
         $veiculo = Veiculo::create(['modelo' => 'Antigo', 'marca' => 'M', 'placa' => 'OLD0A00', 'ano' => 2000, 'clientid' => 1]);
 
         $response = $this->putJson("/api/veiculos/atualizarVeiculo/{$veiculo->carid}", [
-            'modelo' => 'Novo Nome'
+            'modelo' => 'Novo Nome',
         ]);
 
         $response->assertStatus(200);
@@ -117,5 +120,20 @@ class VeiculoControllerTest extends TestCase
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('veiculos', ['carid' => $veiculo->carid]);
+    }
+
+    public function test_missing_customer_service_does_not_create_vehicle(): void
+    {
+        config(['services.internal.cliente' => '']);
+        $this->postJson('/api/veiculos/salvar', ['modelo' => 'Gol', 'marca' => 'VW', 'placa' => 'ABC1D23', 'ano' => 2020, 'clientid' => 1])->assertStatus(503);
+        $this->assertDatabaseCount('veiculos', 0);
+    }
+
+    public function test_customer_network_failure_is_reported(): void
+    {
+        $this->withoutMiddleware();
+        Http::fake(fn () => throw new ConnectionException('offline'));
+        $this->postJson('/api/veiculos/salvar', ['modelo' => 'Gol', 'marca' => 'VW', 'placa' => 'ABC1D23', 'ano' => 2020, 'clientid' => 1])->assertStatus(503);
+        $this->assertDatabaseCount('veiculos', 0);
     }
 }

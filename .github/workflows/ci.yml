@@ -63,13 +63,6 @@ jobs:
         working-directory: Microservicos-lv/php84/${{ matrix.service }}
         run: phpstan analyse app --level=1 --memory-limit=512M --no-progress --autoload-file=vendor/autoload.php
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.service }}
-          path: Microservicos-lv/php84/${{ matrix.service }}/coverage.xml
-          if-no-files-found: error
-
   cliente-mongodb-integration:
     runs-on: ubuntu-latest
     services:
@@ -106,3 +99,15 @@ jobs:
       - name: Verify MongoDB audit persistence
         working-directory: Microservicos-lv/php84/Cliente-lv
         run: vendor/bin/phpunit tests/Integration/ClienteAuditMongoTest.php
+
+  distributed-bdd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start isolated real services
+        run: docker compose -p mws-bdd -f tests/e2e/compose.yml up -d --build --wait --wait-timeout 300
+      - name: Run distributed BDD lifecycle and compensation
+        run: docker compose -p mws-bdd -f tests/e2e/compose.yml run --rm runner
+      - name: Clean isolated test environment
+        if: always()
+        run: docker compose -p mws-bdd -f tests/e2e/compose.yml down -v

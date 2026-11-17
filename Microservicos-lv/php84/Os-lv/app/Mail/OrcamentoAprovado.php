@@ -32,10 +32,10 @@ class OrcamentoAprovado extends Mailable
     public function content(): Content
     {
         return new Content(
-            htmlString: "
+            htmlString: '
                 <h1>Olá! O orçamento de manutenção do seu veículo foi <strong>aprovado</strong></h1>
                 <p>A sua Ordem de Serviço foi atualizada para o status: <strong>Em execução</strong>.</p>
-            ",
+            ',
         );
     }
 }

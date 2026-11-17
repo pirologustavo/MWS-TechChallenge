@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Funcionario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
 
 class FuncionarioControllerTest extends TestCase
 {
@@ -19,7 +19,7 @@ class FuncionarioControllerTest extends TestCase
             'nome' => 'Administrador',
             'cargo' => 'Gerente',
             'usr' => 'admin',
-            'password' => bcrypt('123')
+            'password' => bcrypt('123'),
         ]);
 
         Sanctum::actingAs($funcionario);
@@ -32,14 +32,14 @@ class FuncionarioControllerTest extends TestCase
             'nome' => 'Gustavo Pirolo',
             'cargo' => 'Desenvolvedor',
             'usr' => 'gustavo.pirolo',
-            'password' => bcrypt('123')
+            'password' => bcrypt('123'),
         ]);
 
         Funcionario::create([
             'nome' => 'Erikson',
             'cargo' => 'Gerente',
             'usr' => 'erikson',
-            'password' => bcrypt('123')
+            'password' => bcrypt('123'),
         ]);
 
         $response = $this->getJson('/api/funcionario');
@@ -48,7 +48,7 @@ class FuncionarioControllerTest extends TestCase
         $response->assertJsonCount(3);
 
         $response->assertJsonStructure([
-            '*' => ['funcid', 'nome', 'cargo']
+            '*' => ['funcid', 'nome', 'cargo'],
         ]);
     }
 
@@ -59,14 +59,14 @@ class FuncionarioControllerTest extends TestCase
             'nome' => 'Claudio Mecanico',
             'cargo' => 'Mecânico',
             'usr' => 'claudio.m',
-            'password' => 'secret'
+            'password' => 'secret',
         ]);
 
         Funcionario::create([
             'nome' => 'Claudio Atendente',
             'cargo' => 'Atendente',
             'usr' => 'claudio.a',
-            'password' => 'secret'
+            'password' => 'secret',
         ]);
 
         $response = $this->getJson('/api/funcionario/buscarMecanico?q=Claudio');
@@ -83,7 +83,7 @@ class FuncionarioControllerTest extends TestCase
             'nome' => 'Joao',
             'cargo' => 'Mecânico',
             'usr' => 'joao.m',
-            'password' => 'secret'
+            'password' => 'secret',
         ]);
 
         $response = $this->getJson('/api/funcionario/buscarMecanico?q=Inexistente');

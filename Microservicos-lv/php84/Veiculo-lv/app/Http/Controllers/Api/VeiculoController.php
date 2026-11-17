@@ -4,23 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Veiculo;
+use App\Support\DogStatsD;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use App\Support\DogStatsD;
 
 class VeiculoController extends Controller
 {
     public function salvar(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'modelo'          => 'required|string|max:50',
-            'marca'           => 'required|string|max:30',
-            'placa'           => 'required|string|regex:/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/|unique:veiculos',
-            'ano'             => 'required|integer|min:1900',
+            'modelo' => 'required|string|max:50',
+            'marca' => 'required|string|max:30',
+            'placa' => 'required|string|regex:/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/|unique:veiculos',
+            'ano' => 'required|integer|min:1900',
             'clientid' => 'required|integer|min:1',
         ]);
 
@@ -28,7 +29,7 @@ class VeiculoController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        if (!$this->clientes([(int) $request->clientid])) {
+        if (! $this->clientes([(int) $request->clientid])) {
             return response()->json(['message' => 'Cliente informado não existe.'], 422);
         }
 
@@ -36,7 +37,7 @@ class VeiculoController extends Controller
 
         return response()->json([
             'message' => 'Veículo cadastrado com sucesso!',
-            'data'    => $veiculo
+            'data' => $veiculo,
         ], 201);
     }
 
@@ -44,8 +45,10 @@ class VeiculoController extends Controller
     {
         $veiculos = Veiculo::all();
         $clientes = collect($this->clientes($veiculos->pluck('clientid')->unique()->values()->all()))->keyBy('clientid');
+
         return response()->json($veiculos->map(function ($veiculo) use ($clientes) {
             $veiculo->nome = $clientes[$veiculo->clientid]['nome'] ?? null;
+
             return $veiculo;
         }));
     }
@@ -54,11 +57,12 @@ class VeiculoController extends Controller
     {
         $veiculo = Veiculo::where('carid', $id)->first();
 
-        if (!$veiculo) {
-            return response()->json(['message' => "Veiculo não encontrado!"], 404);
+        if (! $veiculo) {
+            return response()->json(['message' => 'Veiculo não encontrado!'], 404);
         }
 
         $veiculo->nome = collect($this->clientes([(int) $veiculo->clientid]))->first()['nome'] ?? null;
+
         return response()->json($veiculo);
     }
 
@@ -66,19 +70,19 @@ class VeiculoController extends Controller
     {
         $veiculo = Veiculo::where('carid', $id)->first();
 
-        if (!$veiculo) {
-            return response()->json(['message' => "Veiculo não encontrado"], 404);
+        if (! $veiculo) {
+            return response()->json(['message' => 'Veiculo não encontrado'], 404);
         }
 
         $dados = $request->all();
-        if (isset($dados['clientid']) && !$this->clientes([(int) $dados['clientid']])) {
+        if (isset($dados['clientid']) && ! $this->clientes([(int) $dados['clientid']])) {
             return response()->json(['message' => 'Cliente informado não existe.'], 422);
         }
         $veiculo->update($dados);
 
         return response()->json([
             'message' => 'Veiculo atualizado com sucesso!',
-            'data'    => $veiculo
+            'data' => $veiculo,
         ]);
     }
 
@@ -95,7 +99,7 @@ class VeiculoController extends Controller
         return DB::transaction(function () use ($id) {
             $veiculo = Veiculo::where('carid', $id)->first();
 
-            if (!$veiculo) {
+            if (! $veiculo) {
                 return response()->json(['message' => 'Veiculo não encontrado'], 404);
             }
 
@@ -107,7 +111,9 @@ class VeiculoController extends Controller
 
     private function clientes(array $ids): array
     {
-        if (!$ids) return [];
+        if (! $ids) {
+            return [];
+        }
         $baseUrl = (string) config('services.internal.cliente');
         if ($baseUrl === '') {
             DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'veiculo-lv', 'dependency' => 'cliente']);
@@ -115,17 +121,18 @@ class VeiculoController extends Controller
         }
         $correlationId = request()->attributes->get('correlation_id')
             ?? request()->header('X-Correlation-ID')
-            ?? (string) \Illuminate\Support\Str::uuid();
+            ?? (string) Str::uuid();
         request()->attributes->set('correlation_id', $correlationId);
         try {
             $response = Http::acceptJson()->withHeaders([
                 'X-Internal-Token' => (string) config('services.internal_token'),
                 'X-Correlation-ID' => $correlationId,
-            ])->connectTimeout(2)->timeout(5)->get(rtrim($baseUrl, '/') . '/api/internal/v1/clientes', ['ids' => $ids]);
-            if (!$response->successful()) {
+            ])->connectTimeout(2)->timeout(5)->get(rtrim($baseUrl, '/').'/api/internal/v1/clientes', ['ids' => $ids]);
+            if (! $response->successful()) {
                 DogStatsD::metric('mws.integration.errors', 1, 'c', ['service' => 'veiculo-lv', 'dependency' => 'cliente']);
                 throw new HttpException(503, 'Serviço de clientes indisponível.');
             }
+
             return $response->json() ?? [];
         } catch (HttpException $exception) {
             throw $exception;

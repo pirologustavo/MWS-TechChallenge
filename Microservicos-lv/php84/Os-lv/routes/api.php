@@ -10,8 +10,8 @@ Route::get('/ping', function () {
 });
 Route::get('/os/publico/{id}', [OrdemServicoController::class, 'publicoAssinado']);
 
-Route::post('/os/aprovarOsUsuario/{id}', [OrdemServicoController::class, 'aprovarOsUsuario']);
-Route::post('/os/reprovarOsUsuario/{id}', [OrdemServicoController::class, 'reprovarOsUsuario']);
+Route::post('/os/aprovarOsUsuario/{id}', [OrdemServicoController::class, 'aprovarOsUsuario'])->middleware(\App\Http\Middleware\ApprovalSignature::class);
+Route::post('/os/reprovarOsUsuario/{id}', [OrdemServicoController::class, 'reprovarOsUsuario'])->middleware(\App\Http\Middleware\ApprovalSignature::class);
 Route::get("/os/cliente/os/{cpf}", [OrdemServicoController::class, 'verificarOsCliente']);
 
 Route::middleware(SharedServiceTokenAuth::class)->group(function () {
@@ -30,3 +30,11 @@ Route::middleware(SharedServiceTokenAuth::class)->group(function () {
     Route::post("/os/entregar/{id}", [OrdemServicoController::class, 'entregarOs']);
     Route::post("/os/deletarOs/{id}", [OrdemServicoController::class, 'deletarOs']);
 });
+
+Route::middleware(SharedServiceTokenAuth::class)->group(function () {
+    Route::post('/os/{osid}/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout']);
+    Route::post('/os/{osid}/pagamento/verificar', [\App\Http\Controllers\PaymentController::class, 'verify']);
+    Route::post('/os/{osid}/pagamento/estornar', [\App\Http\Controllers\PaymentController::class, 'refund']);
+});
+
+Route::post('/payments/webhook', [\App\Http\Controllers\PaymentController::class, 'webhook']);

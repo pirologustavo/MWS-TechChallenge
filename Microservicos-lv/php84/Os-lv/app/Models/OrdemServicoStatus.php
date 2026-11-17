@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/** @mixin Builder */
 class OrdemServicoStatus extends Model
 {
     protected $table = 'os_status';
+
     protected $primaryKey = 'osstatid';
 
     protected $fillable = [
-        'osid', 'statid'
+        'osid', 'statid',
     ];
 
     // Relacionamento: Este registro de histórico aponta para um status do domínio

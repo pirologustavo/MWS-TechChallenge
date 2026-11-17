@@ -7,7 +7,9 @@ final class DogStatsD
     public static function metric(string $name, float|int $value, string $type = 'g', array $tags = []): void
     {
         $host = (string) env('DD_AGENT_HOST', '');
-        if ($host === '') return;
+        if ($host === '') {
+            return;
+        }
 
         $tagString = $tags ? '|#'.implode(',', array_map(
             fn ($key, $tagValue) => $key.':'.str_replace([',', '|', ':'], '_', (string) $tagValue),
