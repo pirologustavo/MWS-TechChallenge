@@ -1,7 +1,14 @@
 # main.tf
 
+terraform {
+  backend "local" {
+    path = "state/058264081666/terraform.tfstate"
+  }
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region              = "us-east-1"
+  allowed_account_ids = ["058264081666"]
 }
 
 resource "aws_vpc" "mws_vpc" {
@@ -29,7 +36,7 @@ resource "aws_subnet" "public_1" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name                               = "mws-public-1"
+    Name                                = "mws-public-1"
     "kubernetes.io/cluster/mws-cluster" = "shared"
   }
 }
@@ -41,7 +48,7 @@ resource "aws_subnet" "public_2" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name                               = "mws-public-2"
+    Name                                = "mws-public-2"
     "kubernetes.io/cluster/mws-cluster" = "shared"
   }
 }

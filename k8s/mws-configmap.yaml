@@ -4,21 +4,27 @@ metadata:
   name: mws-config
   namespace: default
 data:
+  APP_URL: http://localhost:8080
   DB_CONNECTION: mysql
-  # Point to the shared MySQL/RDS host; provision one schema/user per API.
-  DB_HOST: "replace-with-mysql-rds-endpoint"
-  DB_PORT: "3306"
-  RABBITMQ_HOST: rabbitmq
-  RABBITMQ_PORT: "5672"
-  RABBITMQ_VHOST: "/"
-
-  APP_URL: "http://localhost:8080"
-
-  MAIL_MAILER: smtp
+  DB_HOST: mws-db-rds-v2.cb4k84q8ozhm.us-east-1.rds.amazonaws.com
+  DB_PORT: '3306'
+  MAIL_ENCRYPTION: 'null'
+  MAIL_FROM_ADDRESS: sistema@mws.com.br
+  MAIL_FROM_NAME: Sistema MWS
   MAIL_HOST: mailhog
-  MAIL_PORT: "1025"
-  MAIL_USERNAME: "null"
-  MAIL_PASSWORD: "null"
-  MAIL_ENCRYPTION: "null"
-  MAIL_FROM_ADDRESS: "sistema@mws.com.br"
-  MAIL_FROM_NAME: "Sistema MWS"
+  MAIL_MAILER: smtp
+  MAIL_PASSWORD: 'null'
+  MAIL_PORT: '1025'
+  MAIL_USERNAME: 'null'
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: '5672'
+  RABBITMQ_VHOST: /
+  APP_ENV: production
+  APP_DEBUG: 'false'
+  CACHE_STORE: array
+  SESSION_DRIVER: file
+  LOG_CHANNEL: stderr
+  CLIENTE_API_URL: http://cliente-lv
+  VEICULO_API_URL: http://veiculo-lv
+  FUNCIONARIO_API_URL: http://funcionario-lv
+  ESTOQUE_API_URL: http://estoque-lv
