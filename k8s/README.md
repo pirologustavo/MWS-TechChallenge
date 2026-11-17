@@ -203,6 +203,21 @@ kubectl get nodes
 
 # Aplicação dos Manifests
 
+## EKS do laboratório sem permissões IAM de armazenamento
+
+Use o [overlay de volumes locais](overlays/eks-local/README.md) para preparar os
+diretórios dos nós, criar PVs e aplicar MongoDB/RabbitMQ:
+
+```bash
+python3 scripts/configure-local-storage.py --context mws-eks
+```
+
+Nesse ambiente, atualize os dois StatefulSets pelo script, preservando a classe
+`mws-local`. Os manifests base abaixo se destinam a clusters com armazenamento
+padrão disponível. Os dados locais dependem do disco do nó; faça backup antes
+de substituir ou remover os nós.
+
+
 ## Broker e workers da Saga de OS
 
 O fluxo assíncrono entre OS e Estoque depende do RabbitMQ e de um worker por
@@ -247,6 +262,7 @@ Secret do Cliente; não a coloque no ConfigMap.
 Aplicar todos os recursos Kubernetes:
 
 ```bash
+# Em clusters com StorageClass padrão; no laboratório use o overlay acima.
 kubectl apply -f k8s/
 ```
 
