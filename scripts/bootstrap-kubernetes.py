@@ -100,7 +100,7 @@ for file, service in [('os-saga-worker.yaml','os'),('estoque-saga-worker.yaml','
                 container['imagePullPolicy']='IfNotPresent'
         apply(resource)
 if args.seed_development:
-    kubectl('rollout', 'status', 'deployment/funcionario-lv', '--timeout=120s')
+    kubectl('rollout', 'status', 'deployment/funcionario-lv', '--timeout=300s')
     seed = '''require "vendor/autoload.php"; $app=require "bootstrap/app.php"; $app->make(Illuminate\\Contracts\\Console\\Kernel::class)->bootstrap(); if (App\\Models\\Funcionario::count()===0) {Illuminate\\Support\\Facades\\Artisan::call("db:seed", ["--force"=>true]); echo "Usuários locais iniciais criados.\\n";} else {echo "Usuários existentes preservados.\\n";}'''
     kubectl('exec', 'deployment/funcionario-lv', '--', 'php', '-r', seed)
 print('Recursos aplicados. Acompanhe: kubectl get pods; kubectl rollout status deployment/os-lv', flush=True)

@@ -5,12 +5,9 @@ services:
       MYSQL_ROOT_PASSWORD: bdd-root-password
     healthcheck:
       test:
-      - CMD
-      - mysqladmin
-      - ping
-      - -h
-      - localhost
-      - -pbdd-root-password
+      - CMD-SHELL
+      - MYSQL_PWD="$$MYSQL_ROOT_PASSWORD" mysql --protocol=TCP -h127.0.0.1 -uroot
+        -Nse "SELECT 1"
       interval: 3s
       timeout: 3s
       retries: 40
