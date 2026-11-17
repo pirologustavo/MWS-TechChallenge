@@ -49,11 +49,15 @@ phpstan analyse app --level=1 --memory-limit=512M --no-progress --autoload-file=
 
 Use PHP 8.4, PDO SQLite e PCOV. A cobertura inclui todo o diretório `app`; o pipeline falha abaixo de 80% por serviço. Pint e PHPStan verificam estilo e qualidade estática.
 
+## Resultado dos testes
+<img width="1446" height="815" alt="image" src="https://github.com/user-attachments/assets/351cbd68-5e71-450e-afca-3f8b81955fde" />
+
 ## Documentação e APIs
 
 - [Arquitetura do serviço](docs/ARCHITECTURE.md).
 - [Rotas e autenticação](docs/API.md).
 - [Collection Postman](docs/api.postman_collection.json).
+- [Preparação da apresentação e variáveis](docs/API.md#apresentação-no-postman).
 
 O login ocorre na API Funcionário em `POST /api/login`, com `usr` e `password`. Envie o token retornado em `Authorization: Bearer`. Chamadas internas exigem `X-Internal-Token`; use o mesmo segredo forte entre os serviços.
 

@@ -45,6 +45,8 @@ Execute `php artisan migrate --force` no container após provisionar o database 
 
 Provisione os bancos, ConfigMap `mws-config` e Secrets individuais com o bootstrap do repositório de integração. Aplique `deploy/k8s/` com a imagem construída para o serviço. O CD realiza essa aplicação e aguarda os rollouts. As dependências de infraestrutura precisam existir antes do deploy da aplicação.
 
+No EKS do laboratório, o RabbitMQ usa um volume persistente local vinculado ao nó. A infraestrutura é aplicada no repositório de integração com `python3 scripts/configure-local-storage.py --context mws-eks`. Consulte o [guia de armazenamento local](https://github.com/pirologustavo/MWS-TechChallenge/tree/main/k8s/overlays/eks-local). Os dados são preservados ao recriar o pod no mesmo nó; perda ou substituição do nó exige restauração de backup.
+
 ## Testes Automatizados
 
 ```bash
@@ -57,6 +59,9 @@ phpstan analyse app --level=1 --memory-limit=512M --no-progress --autoload-file=
 
 Use PHP 8.4, PDO SQLite e PCOV. A cobertura inclui todo o diretório `app`; o pipeline falha abaixo de 80% por serviço. Pint e PHPStan verificam estilo e qualidade estática.
 
+## Resultado dos testes
+<img width="1494" height="779" alt="image" src="https://github.com/user-attachments/assets/cb39a93c-b272-4031-b6d2-09d147ae0fd9" />
+
 BDD da aplicação: `php vendor/bin/phpunit --group=bdd`. O teste distribuído, com serviços reais, está no repositório de integração em `tests/e2e`.
 
 ## Documentação e APIs
@@ -64,6 +69,7 @@ BDD da aplicação: `php vendor/bin/phpunit --group=bdd`. O teste distribuído, 
 - [Arquitetura do serviço](docs/ARCHITECTURE.md).
 - [Rotas e autenticação](docs/API.md).
 - [Collection Postman](docs/api.postman_collection.json).
+- [Preparação da apresentação e variáveis](docs/API.md#apresentação-no-postman).
 
 O login ocorre na API Funcionário em `POST /api/login`, com `usr` e `password`. Envie o token retornado em `Authorization: Bearer`. Chamadas internas exigem `X-Internal-Token`; use o mesmo segredo forte entre os serviços.
 

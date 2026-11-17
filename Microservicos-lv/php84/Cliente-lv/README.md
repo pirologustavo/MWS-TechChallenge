@@ -39,6 +39,8 @@ Execute `php artisan migrate --force` no container após provisionar o database 
 
 Provisione os bancos, ConfigMap `mws-config` e Secrets individuais com o bootstrap do repositório de integração. Aplique `deploy/k8s/` com a imagem construída para o serviço. O CD realiza essa aplicação e aguarda os rollouts. As dependências de infraestrutura precisam existir antes do deploy da aplicação.
 
+No EKS do laboratório, o MongoDB usa um volume persistente local vinculado ao nó. A infraestrutura é aplicada no repositório de integração com `python3 scripts/configure-local-storage.py --context mws-eks`. Consulte o [guia de armazenamento local](https://github.com/pirologustavo/MWS-TechChallenge/tree/main/k8s/overlays/eks-local). Os dados são preservados ao recriar o pod no mesmo nó; perda ou substituição do nó exige restauração de backup.
+
 ## Testes Automatizados
 
 ```bash
@@ -53,11 +55,15 @@ Use PHP 8.4, PDO SQLite e PCOV. A cobertura inclui todo o diretório `app`; o pi
 
 O CI também executa `php vendor/bin/phpunit tests/Integration/ClienteAuditMongoTest.php` contra MongoDB real.
 
+## Resultado dos testes
+<img width="1464" height="756" alt="image" src="https://github.com/user-attachments/assets/24e66a24-ad31-4208-ac0e-83ffc80586af" />
+
 ## Documentação e APIs
 
 - [Arquitetura do serviço](docs/ARCHITECTURE.md).
 - [Rotas e autenticação](docs/API.md).
 - [Collection Postman](docs/api.postman_collection.json).
+- [Preparação da apresentação e variáveis](docs/API.md#apresentação-no-postman).
 
 O login ocorre na API Funcionário em `POST /api/login`, com `usr` e `password`. Envie o token retornado em `Authorization: Bearer`. Chamadas internas exigem `X-Internal-Token`; use o mesmo segredo forte entre os serviços.
 
